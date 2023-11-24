@@ -33,4 +33,7 @@ day01     in   +90 us : part1=70720      part2=207148
 
 In C++
 day01_speed_iter        in 37.0242 us : part1=70720     part2=207148
+
+In Rust
+day01 in    33.67 us : part1=70720      part2=207148
 ```
