@@ -9,23 +9,14 @@ My solutions to [Advent of Code 2023](https://adventofcode.com/). This year, I'm
 ```bash
 git clone git@github.com:edmBernard/AoC-2023.git
 cd AoC-2023
-cargo build --release
+zig build -Drelease
 ```
 
 ## Run
 
 ```bash
-cargo run -- data
+./zig-out/bin/day01 data/day01.txt
 ```
-
-## Test
-
-Run each part and expect result to be from my input
-```bash
-cargo test
-```
-
-The executable is named `AoC-2023`. Inputs path can be specified as argument or by default in the data folder.
 
 ## Problem
 
@@ -38,7 +29,7 @@ The executable is named `AoC-2023`. Inputs path can be specified as argument or 
 
 ```
 In Zig
-day01                   in  +975 us : part1=70720      part2=207148
+day01     in   +90 us : part1=70720      part2=207148
 
 In C++
 day01_speed_iter        in 37.0242 us : part1=70720     part2=207148

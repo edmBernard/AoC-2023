@@ -9,26 +9,16 @@ pub fn build(b: *std.build.Builder) void {
 
     // Standard release options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
+    b.setPreferredReleaseMode(.ReleaseFast);
     const mode = b.standardReleaseOptions();
 
-    const exe = b.addExecutable("day01", "src/day01.zig");
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
-    exe.install();
+    const exe1 = b.addExecutable("day01", "src/day01.zig");
+    exe1.setTarget(target);
+    exe1.setBuildMode(mode);
+    exe1.install();
 
-    const run_cmd = exe.run();
-    run_cmd.step.dependOn(b.getInstallStep());
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
-    }
-
-    const run_step = b.step("run", "Run the app");
-    run_step.dependOn(&run_cmd.step);
-
-    // const exe_tests = b.addTest("src/main.zig");
-    // exe_tests.setTarget(target);
-    // exe_tests.setBuildMode(mode);
-
-    // const test_step = b.step("test", "Run unit tests");
-    // test_step.dependOn(&exe_tests.step);
+    const exe2 = b.addExecutable("day02", "src/day02.zig");
+    exe2.setTarget(target);
+    exe2.setBuildMode(mode);
+    exe2.install();
 }
