@@ -11,6 +11,12 @@ clang++ src/day01.cpp -Ofast --std=c++20 -o day01cpp
 rustc -C opt-level=3 src/day01.rs
 ```
 
+for formatting file
+
+```
+rustfmt src/day01.rs
+```
+
 # Zig
 
 ```
