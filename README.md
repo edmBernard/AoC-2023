@@ -1,6 +1,6 @@
 # AoC-2023
 
-My solutions to [Advent of Code 2023](https://adventofcode.com/). This year, I'm going to try doing the challenges in [Zig](https://ziglang.org//)
+My solutions to [Advent of Code 2023](https://adventofcode.com/). This year, I'm going to try doing the challenges mainly in [Zig](https://ziglang.org//) and [Rust](https://rustlang.org//)
 
 - Github : [https://github.com/edmBernard/AoC-2023](https://github.com/edmBernard/AoC-2023)
 
@@ -10,12 +10,14 @@ My solutions to [Advent of Code 2023](https://adventofcode.com/). This year, I'm
 git clone git@github.com:edmBernard/AoC-2023.git
 cd AoC-2023
 zig build -Drelease
+cargo build --release
 ```
 
 ## Run
 
 ```bash
 ./zig-out/bin/day01 data/day01.txt
+./target/release/day01 data/day01.txt
 ```
 
 ## Problem
