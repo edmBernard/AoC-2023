@@ -61,5 +61,5 @@ pub fn main() !void {
         part2 = sum(input_puzzle.items[0..3]);
     }
     var tac = std.time.microTimestamp() - tic;
-    std.log.info("day01 \tin {:5} us : part1={:<10} part2={:<10}", .{ @divFloor(tac, nrun), part1, part2 });
+    std.log.info("Zig  day01 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
 }

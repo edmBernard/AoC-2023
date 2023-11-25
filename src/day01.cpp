@@ -146,7 +146,7 @@ int main_regular(int argc, char *argv[]) {
   }
 
   std::chrono::duration<double, std::micro> elapsed_temp = std::chrono::high_resolution_clock::now() - start_temp;
-  std::cout << "day01_regular \tin " << elapsed_temp.count() / 10000. << " us : part1=" << part1 << " \tpart2=" << part2 << std::endl;
+  std::cout << "info: C++  day01_regular \t in \t" << elapsed_temp.count() / 10000. << " us : part1=" << part1 << " \tpart2=" << part2 << std::endl;
 
   return 0;
 }
@@ -200,7 +200,7 @@ int main_speed_raw(int argc, char *argv[]) {
   }
 
   std::chrono::duration<double, std::micro> elapsed_temp = std::chrono::high_resolution_clock::now() - start_temp;
-  std::cout << "day01_speed_raw \tin " << elapsed_temp.count() / 10000. << " us : part1=" << part1 << " \tpart2=" << part2 << std::endl;
+  std::cout << "info: C++  day01_speed_raw \t in \t" << elapsed_temp.count() / 10000. << " us : part1=" << part1 << " \tpart2=" << part2 << std::endl;
 
   return 0;
 }
@@ -244,7 +244,7 @@ int main_speed_iter(int argc, char *argv[]) {
   }
 
   std::chrono::duration<double, std::micro> elapsed_temp = std::chrono::high_resolution_clock::now() - start_temp;
-  std::cout << "day01_speed_iter \tin " << elapsed_temp.count() / 10000. << " us : part1=" << part1 << " \tpart2=" << part2 << std::endl;
+  std::cout << "info: C++  day01_speed_iter \t in \t" << elapsed_temp.count() / 10000. << " us : part1=" << part1 << " \tpart2=" << part2 << std::endl;
 
   return 0;
 }
