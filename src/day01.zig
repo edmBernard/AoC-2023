@@ -1,6 +1,8 @@
 const std = @import("std");
 
-pub const log_level: std.log.Level = .info;
+pub const std_options = struct {
+    pub const log_level = .info;
+};
 
 fn sum(array: []u64) u64 {
     var acc: u64 = 0;
@@ -31,7 +33,7 @@ pub fn main() !void {
     var part1: u64 = 0;
     var part2: u64 = 0;
     const nrun = 10000;
-    for (.{0} ** nrun) |_| {
+    for (0..nrun) |_| {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
 
@@ -54,7 +56,7 @@ pub fn main() !void {
             const integer = try std.fmt.parseUnsigned(u64, line, 10);
             acc += integer;
         }
-        std.sort.sort(u64, input_puzzle.items, {}, std.sort.desc(u64));
+        std.sort.pdq(u64, input_puzzle.items, {}, std.sort.desc(u64));
         part1 = input_puzzle.items[0];
         part2 = sum(input_puzzle.items[0..3]);
     }

@@ -1,6 +1,6 @@
 # AoC-2023
 
-My solutions to [Advent of Code 2023](https://adventofcode.com/). This year, I'm going to try doing the challenges in completly in [Zig](https://ziglang.org//)
+My solutions to [Advent of Code 2023](https://adventofcode.com/). This year, I'm going to try doing the challenges in [Zig](https://ziglang.org//)
 
 - Github : [https://github.com/edmBernard/AoC-2023](https://github.com/edmBernard/AoC-2023)
 
@@ -29,7 +29,7 @@ zig build -Drelease
 
 ```
 In Zig
-day01     in   +90 us : part1=70720      part2=207148
+day01     in   +66 us : part1=43554      part2=139877
 
 In C++
 day01_speed_iter        in 37.0242 us : part1=70720     part2=207148
@@ -37,3 +37,9 @@ day01_speed_iter        in 37.0242 us : part1=70720     part2=207148
 In Rust
 day01 in    33.67 us : part1=70720      part2=207148
 ```
+
+## Versions
+
+Zig : 0.11.0
+Rust : rustc 1.70.0
+C++ : clang 15.0.0
