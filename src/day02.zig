@@ -13,9 +13,9 @@ fn sum(array: []u64) u64 {
 }
 
 pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-    defer _ = gpa.deinit();
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
 
     var args = try std.process.argsWithAllocator(allocator);
     defer args.deinit();
@@ -37,16 +37,15 @@ pub fn main() !void {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
 
-        var buf_reader = std.io.bufferedReader(file.reader());
-        var in_stream = buf_reader.reader();
-
-        var buf: [1024]u8 = undefined;
+        var read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
+        defer allocator.free(read_buf);
+        var it = std.mem.splitAny(u8, read_buf, "\n");
 
         var acc: u64 = 0;
         var input_puzzle = std.ArrayList(u64).init(allocator);
         defer input_puzzle.deinit();
 
-        while (try in_stream.readUntilDelimiterOrEof(&buf, '\n')) |line| {
+        while (it.next()) |line| {
             if (line.len == 0) {
                 try input_puzzle.append(acc);
                 acc = 0;

@@ -14,8 +14,8 @@ fn sum(array: []u64) u64 {
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
     defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
     var args = try std.process.argsWithAllocator(allocator);
     defer args.deinit();
