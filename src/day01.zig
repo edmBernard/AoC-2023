@@ -39,40 +39,54 @@ pub fn main() !void {
         while (it.next()) |line| {
             // part1
             {
-                var parsedLine = std.ArrayList(u64).init(allocator);
-                defer parsedLine.deinit();
+                var has_digits = false;
+                var firstDigit: u32 = 0;
+                var lastDigit: u32 = 0;
                 for (line) |c| {
                     var digit = c - '0';
                     if (digit >= 0 and digit < 10) {
-                        try parsedLine.append(digit);
+                        if (!has_digits) {
+                            firstDigit = digit;
+                            has_digits = true;
+                        }
+                        lastDigit = digit;
                     }
                 }
-                if (parsedLine.items.len > 0) {
-                    acc_part1 += parsedLine.items[0] * 10 + parsedLine.items[parsedLine.items.len - 1];
+                if (has_digits) {
+                    acc_part1 += firstDigit * 10 + lastDigit;
                 }
             }
             // part2
             {
                 var digits_string = [_][]const u8{ "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
-                var parsedLine = std.ArrayList(u64).init(allocator);
-                defer parsedLine.deinit();
+                var has_digits = false;
+                var firstDigit: u64 = 0;
+                var lastDigit: u64 = 0;
                 // We use this method because word can overlap like "nineight"
                 outer: for (0..line.len) |i| {
                     var slice = line[i..];
                     var digit = slice[0] - '0';
                     if (digit >= 0 and digit < 10) {
-                        try parsedLine.append(digit);
+                        if (!has_digits) {
+                            firstDigit = digit;
+                            has_digits = true;
+                        }
+                        lastDigit = digit;
                     } else {
-                        for (digits_string, 1..) |str, num| {
+                        for (digits_string, 1..) |str, value| {
                             if (std.mem.startsWith(u8, slice, str)) {
-                                try parsedLine.append(num);
+                                if (!has_digits) {
+                                    firstDigit = value;
+                                    has_digits = true;
+                                }
+                                lastDigit = value;
                                 continue :outer;
                             }
                         }
                     }
                 }
-                if (parsedLine.items.len > 0) {
-                    acc_part2 += parsedLine.items[0] * 10 + parsedLine.items[parsedLine.items.len - 1];
+                if (has_digits) {
+                    acc_part2 += firstDigit * 10 + lastDigit;
                 }
             }
         }

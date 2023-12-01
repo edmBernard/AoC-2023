@@ -1,5 +1,4 @@
 use std::time::Instant;
-use std::iter::zip;
 
 type Result<T> = ::std::result::Result<T, Box<dyn (::std::error::Error)>>;
 
@@ -23,36 +22,54 @@ fn main() -> Result<()> {
       let line_str = line;
       // part1
       {
-        let parsed_line = line_str
-          .chars()
-          .filter_map(|c| c.to_digit(10))
-          .collect::<Vec<_>>();
-        if parsed_line.len() > 0 {
-          acc_part1 += parsed_line[0] * 10 + parsed_line[parsed_line.len()-1];
+        // we can do the part1 with a range notation but it's super slow
+        let mut has_digits = false;
+        let mut first_digits = 0;
+        let mut last_digits = 0;
+        for i in 0..line_str.len() {
+          let slice = &line_str[i..];
+          if let Some(d) = slice.chars().next().ok_or("Failed to get first digit")?.to_digit(10) {
+            if !has_digits {
+              first_digits = d;
+              has_digits = true;
+            }
+            last_digits = d;
+          }
+        }
+        if has_digits {
+          acc_part1 += first_digits * 10 + last_digits;
         }
       }
       // part2
       {
-        let mut parsed_line: Vec<u64> = vec![];
-        let line_len = line_str.len();
-        parsed_line.reserve(1024);
+        let mut has_digits = false;
+        let mut first_digits = 0;
+        let mut last_digits = 0;
         // We use this method because word can overlap like "nineight"
         let digits_string = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
-        'outer: for i in 0..line_len {
+        'outer: for i in 0..line_str.len() {
           let slice = &line_str[i..];
-          if let Some(d) = slice.chars().nth(0).ok_or("Failed to get first digit")?.to_digit(10) {
-            parsed_line.push(d as u64);
+          if let Some(d) = slice.chars().next().ok_or("Failed to get first digit")?.to_digit(10) {
+            if !has_digits {
+              first_digits = d;
+              has_digits = true;
+            }
+            last_digits = d;
           } else {
-            for (num, str) in zip(1.., digits_string.iter()) {
+            for (idx, str) in digits_string.iter().enumerate() {
               if slice.starts_with(str) {
-                parsed_line.push(num);
+                if !has_digits {
+                  first_digits = (idx + 1) as u32;
+                  has_digits = true;
+                }
+                last_digits = (idx + 1) as u32;
                 continue 'outer;
               }
             }
           }
         }
-        if parsed_line.len() > 0 {
-          acc_part2 += parsed_line[0] * 10 + parsed_line[parsed_line.len()-1];
+        if has_digits {
+          acc_part2 += first_digits * 10 + last_digits;
         }
       }
     }

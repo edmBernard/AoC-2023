@@ -1,5 +1,6 @@
 
 #include <algorithm>
+#include <array>
 #include <charconv>
 #include <chrono>
 #include <filesystem>
@@ -9,7 +10,6 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <array>
 
 namespace {
 
@@ -93,8 +93,6 @@ private:
 
 } // namespace
 
-
-// ./standalonecpp ../data/day01.txt
 // We read the whole file in a string
 // We use an iterator implementation that was a bit tricky/ugly
 // but we have a nice syntaxe and full speed
@@ -117,35 +115,49 @@ int main(int argc, char *argv[]) {
     for (auto line : IteratorOnLines(input_raw)) {
       // part 1
       {
-        std::vector<uint64_t> digits;
-        digits.reserve(1024);
+        bool has_digits = false;
+        int firstDigit = 0;
+        int lastDigit = 0;
         for (int i = 0; i < line.size(); ++i) {
           if (const int digit = line[i] - '0'; digit >= 0 && digit < 10) {
-            digits.push_back(digit);
+            if (!has_digits) {
+              firstDigit = digit;
+              has_digits = true;
+            }
+            lastDigit = digit;
           }
         }
-        if (digits.size() > 0)
-          acc_part1 += digits[0] * 10 + digits[digits.size() - 1];
+        if (has_digits)
+          acc_part1 += firstDigit * 10 + lastDigit;
       }
       // part2
       {
-        std::vector<uint64_t> digits;
-        digits.reserve(1024);
+        bool has_digits = false;
+        int firstDigit = 0;
+        int lastDigit = 0;
         for (int i = 0; i < line.size(); ++i) {
           const auto slice = line.substr(i);
           if (const int digit = slice[0] - '0'; digit >= 0 && digit < 10) {
-            digits.push_back(digit);
+            if (!has_digits) {
+              firstDigit = digit;
+              has_digits = true;
+            }
+            lastDigit = digit;
           } else {
             for (int idx = 0; idx < digits_string.size(); ++idx) {
               if (slice.starts_with(digits_string[idx])) {
-                digits.push_back(idx + 1);
+                if (!has_digits) {
+                  firstDigit = idx + 1;
+                  has_digits = true;
+                }
+                lastDigit = idx + 1;
                 break;
               }
             }
           }
         }
-        if (digits.size() > 0)
-          acc_part2 += digits[0] * 10 + digits[digits.size() - 1];
+        if (has_digits)
+          acc_part2 += firstDigit * 10 + lastDigit;
       }
     };
 
