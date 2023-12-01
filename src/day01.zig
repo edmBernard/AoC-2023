@@ -13,9 +13,9 @@ fn sum(array: []u64) u64 {
 }
 
 pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
 
     var args = try std.process.argsWithAllocator(allocator);
     defer args.deinit();
@@ -32,15 +32,14 @@ pub fn main() !void {
     var tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
-    const nrun = 100;
+    const nrun = 10000;
     for (0..nrun) |_| {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
 
-        var buf_reader = std.io.bufferedReader(file.reader());
-        var in_stream = buf_reader.reader();
-
-        var buf: [1024]u8 = undefined;
+        var read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
+        defer allocator.free(read_buf);
+        var it = std.mem.splitAny(u8, read_buf, "\n");
 
         var acc: u64 = 0;
         _ = acc;
@@ -49,7 +48,7 @@ pub fn main() !void {
         var digits2 = std.ArrayList(u64).init(allocator);
         defer digits2.deinit();
 
-        while (try in_stream.readUntilDelimiterOrEof(&buf, '\n')) |line| {
+        while (it.next()) |line| {
             // part1
             {
                 var parsedLine = std.ArrayList(u64).init(allocator);
@@ -74,23 +73,23 @@ pub fn main() !void {
                     var digit = slice[0] - '0';
                     if (digit >= 0 and digit < 10) {
                         try parsedLine.append(digit);
-                    } else if (std.mem.eql(u8, slice[0..3], "one")) {
+                    } else if (std.mem.startsWith(u8, slice, "one")) {
                         try parsedLine.append(1);
-                    } else if (std.mem.eql(u8, slice[0..3], "two")) {
+                    } else if (std.mem.startsWith(u8, slice, "two")) {
                         try parsedLine.append(2);
-                    } else if (std.mem.eql(u8, slice[0..5], "three")) {
+                    } else if (std.mem.startsWith(u8, slice, "three")) {
                         try parsedLine.append(3);
-                    } else if (std.mem.eql(u8, slice[0..4], "four")) {
+                    } else if (std.mem.startsWith(u8, slice, "four")) {
                         try parsedLine.append(4);
-                    } else if (std.mem.eql(u8, slice[0..4], "five")) {
+                    } else if (std.mem.startsWith(u8, slice, "five")) {
                         try parsedLine.append(5);
-                    } else if (std.mem.eql(u8, slice[0..3], "six")) {
+                    } else if (std.mem.startsWith(u8, slice, "six")) {
                         try parsedLine.append(6);
-                    } else if (std.mem.eql(u8, slice[0..5], "seven")) {
+                    } else if (std.mem.startsWith(u8, slice, "seven")) {
                         try parsedLine.append(7);
-                    } else if (std.mem.eql(u8, slice[0..5], "eight")) {
+                    } else if (std.mem.startsWith(u8, slice, "eight")) {
                         try parsedLine.append(8);
-                    } else if (std.mem.eql(u8, slice[0..4], "nine")) {
+                    } else if (std.mem.startsWith(u8, slice, "nine")) {
                         try parsedLine.append(9);
                     }
                 }

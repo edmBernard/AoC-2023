@@ -1,4 +1,3 @@
-use regex::Regex;
 use std::time::Instant;
 
 type Result<T> = ::std::result::Result<T, Box<dyn (::std::error::Error)>>;
@@ -14,7 +13,7 @@ fn main() -> Result<()> {
 
   let mut part1: u64 = 0;
   let mut part2: u64 = 0;
-  let nrun = 100;
+  let nrun = 10000;
 
   for _ in 0..nrun {
     let mut digits1: Vec<i32> = Vec::new();
@@ -39,7 +38,6 @@ fn main() -> Result<()> {
       for i in 0..line_len {
         let slice = &line_str[i..];
         if let Some(d) = slice.chars().nth(0).unwrap().to_digit(10) {
-          println!("slice {}", slice);
           parsed_line.push(d as u64);
         } else if slice.starts_with("one") {
             parsed_line.push(1);

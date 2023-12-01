@@ -31,10 +31,10 @@ cargo build --release
 
 ```
 In Zig
-Zig  day01 in                28.35 us : part1=70720      part2=207148
+Zig  day01 in               193.53 us : part1=54304      part2=54418
 
 In Rust
-Rust day01 in                31.42 us : part1=70720      part2=207148
+Rust day01 in               249.95 us : part1=54304      part2=54418
 
 In C++
 C++  day01_speed_iter      in     36.8169 us : part1=70720        part2=207148
