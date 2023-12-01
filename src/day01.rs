@@ -22,37 +22,38 @@ fn main() -> Result<()> {
     for line in std::fs::read_to_string(filename)?.lines() {
       let line_str = line;
       // part1
-      let parsed_line: Vec<i32> = line_str
-        .as_bytes()
-        .iter()
-        .map(|c| *c as i32 - '0' as i32)
-        .filter(|d| *d >= 0 && *d < 10i32)
-        .collect::<Vec<_>>();
-      let parsed_len = parsed_line.len();
-      if parsed_len > 0 {
-        acc_part1 += parsed_line[0] * 10 + parsed_line[parsed_len - 1];
+      {
+        let parsed_line = line_str
+          .chars()
+          .filter_map(|c| c.to_digit(10))
+          .collect::<Vec<_>>();
+        if parsed_line.len() > 0 {
+          acc_part1 += parsed_line[0] * 10 + parsed_line[parsed_line.len()-1];
+        }
       }
       // part2
-      let mut parsed_line: Vec<u64> = vec![];
-      let line_len = line_str.len();
-      // We use this method because word can overlap like "nineight"
-      let digits_string = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
-      'outer: for i in 0..line_len {
-        let slice = &line_str[i..];
-        if let Some(d) = slice.chars().nth(0).ok_or("Failed to get first digit")?.to_digit(10) {
-          parsed_line.push(d as u64);
-        } else {
-          for (num, str) in zip(1.., digits_string.iter()) {
-            if slice.starts_with(str) {
-              parsed_line.push(num);
-              continue 'outer;
+      {
+        let mut parsed_line: Vec<u64> = vec![];
+        let line_len = line_str.len();
+        parsed_line.reserve(1024);
+        // We use this method because word can overlap like "nineight"
+        let digits_string = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+        'outer: for i in 0..line_len {
+          let slice = &line_str[i..];
+          if let Some(d) = slice.chars().nth(0).ok_or("Failed to get first digit")?.to_digit(10) {
+            parsed_line.push(d as u64);
+          } else {
+            for (num, str) in zip(1.., digits_string.iter()) {
+              if slice.starts_with(str) {
+                parsed_line.push(num);
+                continue 'outer;
+              }
             }
           }
         }
-      }
-      let parsed_len = parsed_line.len();
-      if parsed_line.len() > 0 {
-        acc_part2 += parsed_line[0] * 10 + parsed_line[parsed_len - 1];
+        if parsed_line.len() > 0 {
+          acc_part2 += parsed_line[0] * 10 + parsed_line[parsed_line.len()-1];
+        }
       }
     }
     part1 = acc_part1 as u64;

@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
       // part 1
       {
         std::vector<uint64_t> digits;
-        digits.reserve(1000);
+        digits.reserve(1024);
         for (int i = 0; i < line.size(); ++i) {
           if (const int digit = line[i] - '0'; digit >= 0 && digit < 10) {
             digits.push_back(digit);
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
       // part2
       {
         std::vector<uint64_t> digits;
-        digits.reserve(1000);
+        digits.reserve(1024);
         for (int i = 0; i < line.size(); ++i) {
           const auto slice = line.substr(i);
           if (const int digit = slice[0] - '0'; digit >= 0 && digit < 10) {
@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
     };
 
     part1 = acc_part1;
-    part2 = acc_part1;
+    part2 = acc_part2;
   }
 
   std::chrono::duration<double, std::micro> elapsed_temp = std::chrono::high_resolution_clock::now() - start_temp;
