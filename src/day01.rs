@@ -51,7 +51,9 @@ fn main() -> Result<()> {
         }
       }
       let parsed_len = parsed_line.len();
-      digits2.push(parsed_line[0] * 10 + parsed_line[parsed_len - 1]);
+      if parsed_line.len() > 0 {
+        digits2.push(parsed_line[0] * 10 + parsed_line[parsed_len - 1]);
+      }
     }
     part1 = digits1.iter().sum::<i32>() as u64;
     part2 = digits2.iter().sum();

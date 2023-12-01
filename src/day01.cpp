@@ -9,6 +9,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <array>
 
 namespace {
 
@@ -92,167 +93,68 @@ private:
 
 } // namespace
 
-// cat ../data/day01.txt | ./standalonecpp
-int main_from_stdin() {
-  std::vector<uint64_t> input_puzzle;
-  uint64_t value = 0;
-  for (std::string line; std::getline(std::cin, line);) {
-    if (line.empty()) {
-      input_puzzle.push_back(value);
-      value = 0;
-      continue;
-    }
-    value += Parse<uint64_t>(line);
-  }
-  // std::ranges::sort(input_puzzle);
-  std::sort(input_puzzle.begin(), input_puzzle.end());
-
-  std::cout << "part1: " << input_puzzle[input_puzzle.size() - 1] << "\n";
-  std::cout << "part2: " << std::reduce(input_puzzle.begin() + input_puzzle.size() - 3, input_puzzle.end()) << "\n";
-
-  return 0;
-}
-
-// ./standalonecpp ../data/day01.txt
-int main_regular(int argc, char *argv[]) {
-  if (argc <= 1)
-    return 1;
-
-  auto start_temp = std::chrono::high_resolution_clock::now();
-  uint64_t part1 = 0;
-  uint64_t part2 = 0;
-  for (int i = 0; i < 10000; ++i) {
-
-    std::ifstream infile(argv[1]);
-    if (!infile.is_open())
-      throw std::runtime_error("File Not Found");
-
-    std::vector<uint64_t> input_puzzle;
-    uint64_t value = 0;
-    for (std::string line; std::getline(infile, line);) {
-      if (line.empty()) {
-        input_puzzle.push_back(value);
-        value = 0;
-        continue;
-      }
-      value += Parse<uint64_t>(line);
-    }
-
-    // std::ranges::sort(input_puzzle);
-    std::sort(input_puzzle.begin(), input_puzzle.end());
-
-    part1 = input_puzzle[input_puzzle.size() - 1];
-    part2 = std::reduce(input_puzzle.begin() + input_puzzle.size() - 3, input_puzzle.end());
-  }
-
-  std::chrono::duration<double, std::micro> elapsed_temp = std::chrono::high_resolution_clock::now() - start_temp;
-  std::cout << "info: C++  day01_regular \t in \t" << elapsed_temp.count() / 10000. << " us : part1=" << part1 << " \tpart2=" << part2 << std::endl;
-
-  return 0;
-}
-
-// ./standalonecpp ../data/day01.txt
-// Design for speed but notation was a bit ugly
-// We read the whole file in a string
-int main_speed_raw(int argc, char *argv[]) {
-  if (argc <= 1)
-    return 1;
-
-  auto start_temp = std::chrono::high_resolution_clock::now();
-  uint64_t part1 = 0;
-  uint64_t part2 = 0;
-
-  for (int i = 0; i < 10000; ++i) {
-
-    std::ifstream infile(argv[1], std::ios::in | std::ios::binary);
-    if (!infile.is_open())
-      throw std::runtime_error("File Not Found");
-
-    // Obtain the size of the file.
-    const auto sz = std::filesystem::file_size(argv[1]);
-    // Create a buffer.
-    std::string input_raw(sz, '\0');
-    // Read the whole file into the buffer.
-    infile.read(input_raw.data(), sz);
-
-    std::vector<uint64_t> input_puzzle;
-    uint64_t value = 0;
-
-    // Reading directly the whole file and parsing each line is faster than getline+parsing
-    for (size_t start = 0, next = input_raw.find('\n', start), parsed = 0;
-         next != std::string_view::npos;
-         start = ++next, next = input_raw.find('\n', start)) {
-
-      if (next == start) {
-        input_puzzle.push_back(value);
-        value = 0;
-        continue;
-      }
-      const auto [ptr, ec] = std::from_chars(input_raw.data() + start, input_raw.data() + next, parsed);
-      value += parsed;
-    };
-
-    // std::ranges::sort(input_puzzle);
-    std::sort(input_puzzle.begin(), input_puzzle.end());
-
-    part1 = input_puzzle[input_puzzle.size() - 1];
-    part2 = std::reduce(input_puzzle.begin() + input_puzzle.size() - 3, input_puzzle.end());
-  }
-
-  std::chrono::duration<double, std::micro> elapsed_temp = std::chrono::high_resolution_clock::now() - start_temp;
-  std::cout << "info: C++  day01_speed_raw \t in \t" << elapsed_temp.count() / 10000. << " us : part1=" << part1 << " \tpart2=" << part2 << std::endl;
-
-  return 0;
-}
 
 // ./standalonecpp ../data/day01.txt
 // We read the whole file in a string
 // We use an iterator implementation that was a bit tricky/ugly
 // but we have a nice syntaxe and full speed
-int main_speed_iter(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
   if (argc <= 1)
     return 1;
 
   auto start_temp = std::chrono::high_resolution_clock::now();
   uint64_t part1 = 0;
   uint64_t part2 = 0;
+  constexpr float nruns = 10000.;
+  for (int i = 0; i < nruns; ++i) {
 
-  for (int i = 0; i < 10000; ++i) {
+    const std::string input_raw = ReadToString(argv[1]);
 
-    std::string input_raw = ReadToString(argv[1]);
+    std::vector<uint64_t> parsedLine1;
+    std::vector<uint64_t> parsedLine2;
+    constexpr std::array<std::string_view, 9> digits_string{"one", "two", "three", "four", "five", "six", "seven", "eight", "nine"};
 
-    std::vector<uint64_t> input_puzzle;
-    uint64_t value = 0;
-
-    // Reading directly the whole file and parsing each line is faster than getline+parsing
-    size_t parsed = 0;
     for (auto line : IteratorOnLines(input_raw)) {
-
-      if (line.empty()) {
-        input_puzzle.push_back(value);
-        value = 0;
-        continue;
+      // part 1
+      {
+        std::vector<uint64_t> digits;
+        digits.reserve(1000);
+        for (int i = 0; i < line.size(); ++i) {
+          if (const int digit = line[i] - '0'; digit >= 0 && digit < 10) {
+            digits.push_back(digit);
+          }
+        }
+        if (digits.size() > 0)
+          parsedLine1.push_back(digits[0] * 10 + digits[digits.size() - 1]);
       }
-      value += Parse<uint64_t>(line);
+      // part2
+      {
+        std::vector<uint64_t> digits;
+        digits.reserve(1000);
+        for (int i = 0; i < line.size(); ++i) {
+          const auto slice = line.substr(i);
+          if (const int digit = slice[0] - '0'; digit >= 0 && digit < 10) {
+            digits.push_back(digit);
+          } else {
+            for (int idx = 0; idx < digits_string.size(); ++idx) {
+              if (slice.starts_with(digits_string[idx])) {
+                digits.push_back(idx + 1);
+                break;
+              }
+            }
+          }
+        }
+        if (digits.size() > 0)
+          parsedLine2.push_back(digits[0] * 10 + digits[digits.size() - 1]);
+      }
     };
 
-    // std::ranges::sort(input_puzzle);
-    std::sort(input_puzzle.begin(), input_puzzle.end());
-
-    part1 = input_puzzle[input_puzzle.size() - 1];
-    part2 = std::reduce(input_puzzle.begin() + input_puzzle.size() - 3, input_puzzle.end());
+    part1 = std::reduce(parsedLine1.begin(), parsedLine1.end());
+    part2 = std::reduce(parsedLine2.begin(), parsedLine2.end());
   }
 
   std::chrono::duration<double, std::micro> elapsed_temp = std::chrono::high_resolution_clock::now() - start_temp;
-  std::cout << "info: C++  day01_speed_iter \t in \t" << elapsed_temp.count() / 10000. << " us : part1=" << part1 << " \tpart2=" << part2 << std::endl;
+  std::cout << "info: C++  day01 in \t\t" << elapsed_temp.count() / nruns << " us : part1=" << part1 << " \tpart2=" << part2 << std::endl;
 
-  return 0;
-}
-
-int main(int argc, char *argv[]) {
-  main_regular(argc, argv);
-  main_speed_raw(argc, argv);
-  // Surprisingly the iterator version is slightly faster in release than raw
-  main_speed_iter(argc, argv);
   return 0;
 }
