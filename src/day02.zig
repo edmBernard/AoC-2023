@@ -4,14 +4,6 @@ pub const std_options = struct {
     pub const log_level = .info;
 };
 
-fn sum(array: []u64) u64 {
-    var acc: u64 = 0;
-    for (array) |value| {
-        acc += value;
-    }
-    return acc;
-}
-
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
@@ -41,24 +33,73 @@ pub fn main() !void {
         defer allocator.free(read_buf);
         var it = std.mem.splitAny(u8, read_buf, "\n");
 
-        var acc: u64 = 0;
-        var input_puzzle = std.ArrayList(u64).init(allocator);
-        defer input_puzzle.deinit();
+        var acc_part1: u64 = 0;
+        var acc_part2: u64 = 0;
 
         while (it.next()) |line| {
-            if (line.len == 0) {
-                try input_puzzle.append(acc);
-                acc = 0;
-                continue;
+            // part1
+            {
+                var firstDigit: u32 = 0;
+                var lastDigit: u32 = 0;
+                forward: for (0..line.len) |idx| {
+                    var digit = line[idx] - '0';
+                    if (digit >= 0 and digit < 10) {
+                        firstDigit = digit;
+                        break :forward;
+                    }
+                }
+                backward: for (0..line.len) |idx| {
+                    var digit = line[line.len - idx - 1] - '0';
+                    if (digit >= 0 and digit < 10) {
+                        lastDigit = digit;
+                        break :backward;
+                    }
+                }
+                acc_part1 += firstDigit * 10 + lastDigit;
             }
-
-            const integer = try std.fmt.parseUnsigned(u64, line, 10);
-            acc += integer;
+            // part2
+            {
+                var digits_string = [_][]const u8{ "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
+                var firstDigit: u64 = 0;
+                var lastDigit: u64 = 0;
+                // We use this method because word can overlap like "nineight"
+                forward: for (0..line.len) |idx| {
+                    var digit = line[idx] - '0';
+                    if (digit >= 0 and digit < 10) {
+                        firstDigit = digit;
+                        break :forward;
+                    } else {
+                        var slice = line[idx..];
+                        for (digits_string, 1..) |str, value| {
+                            if (std.mem.startsWith(u8, slice, str)) {
+                                firstDigit = value;
+                                break :forward;
+                            }
+                        }
+                    }
+                }
+                backward: for (0..line.len) |idx| {
+                    var ridx = line.len - idx - 1;
+                    var digit = line[ridx] - '0';
+                    if (digit >= 0 and digit < 10) {
+                        lastDigit = digit;
+                        break :backward;
+                    } else {
+                        var slice = line[ridx..];
+                        for (digits_string, 1..) |str, value| {
+                            if (std.mem.startsWith(u8, slice, str)) {
+                                lastDigit = value;
+                                break :backward;
+                            }
+                        }
+                    }
+                }
+                acc_part2 += firstDigit * 10 + lastDigit;
+            }
         }
-        std.sort.pdq(u64, input_puzzle.items, {}, std.sort.desc(u64));
-        part1 = input_puzzle.items[0];
-        part2 = sum(input_puzzle.items[0..3]);
+        part1 = acc_part1;
+        part2 = acc_part2;
     }
-    var tac = std.time.microTimestamp() - tic;
+    var tac: i64 = std.time.microTimestamp() - tic;
     std.log.info("Zig  day02 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
 }

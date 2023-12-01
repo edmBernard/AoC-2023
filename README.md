@@ -22,9 +22,10 @@ cargo build --release
 
 ## Problem
 
-| Day   | Description                | Tips  |
-|--     |--                          |--     |
-| Day01 [<sup>puzzle</sup>](https://adventofcode.com/2023/day/1 ) [<sup>solution</sup>](src/day01.zig) | Find digit and literal digit | -     |
+| Day   | Solution | Description                | Tips  |
+|--     |--        |--                          |--     |
+| Day01 <sup>[puzzle](https://adventofcode.com/2023/day/1) | [Zig](src/day01.zig) [Rust](src/day01.rs) [C++](src/day01.cpp) | Find digit and literal digit | Store only useful digits, do the search in both direction |
+| Day02 <sup>[puzzle](https://adventofcode.com/2023/day/2) | [Zig](src/day02.zig) [Rust](src/day02.rs) [C++](src/day02.cpp) | Find digit and literal digit | Store only useful digits, do the search in both direction |
 
 
 ## Some Timing :
@@ -43,6 +44,6 @@ C++  day01 in               49.191 us : part1=54304     part2=54418
 
 ## Versions
 
-Zig  : 0.11.0
-Rust : rustc 1.76.0
-C++  : clang 15.0.0
+- Zig  : 0.11.0
+- Rust : rustc 1.76.0
+- C++  : clang 15.0.0
