@@ -115,49 +115,61 @@ int main(int argc, char *argv[]) {
     for (auto line : IteratorOnLines(input_raw)) {
       // part 1
       {
-        bool has_digits = false;
         int firstDigit = 0;
         int lastDigit = 0;
+        // forward
         for (int i = 0; i < line.size(); ++i) {
           if (const int digit = line[i] - '0'; digit >= 0 && digit < 10) {
-            if (!has_digits) {
-              firstDigit = digit;
-              has_digits = true;
-            }
-            lastDigit = digit;
+            firstDigit = digit;
+            break;
           }
         }
-        if (has_digits)
-          acc_part1 += firstDigit * 10 + lastDigit;
+        // backward
+        for (int i = line.size() - 1; i >= 0; --i) {
+          if (const int digit = line[i] - '0'; digit >= 0 && digit < 10) {
+            lastDigit = digit;
+            break;
+          }
+        }
+        acc_part1 += firstDigit * 10 + lastDigit;
       }
       // part2
       {
-        bool has_digits = false;
         int firstDigit = 0;
         int lastDigit = 0;
+        // forward
         for (int i = 0; i < line.size(); ++i) {
           const auto slice = line.substr(i);
           if (const int digit = slice[0] - '0'; digit >= 0 && digit < 10) {
-            if (!has_digits) {
-              firstDigit = digit;
-              has_digits = true;
-            }
-            lastDigit = digit;
+            firstDigit = digit;
+            break;
           } else {
             for (int idx = 0; idx < digits_string.size(); ++idx) {
               if (slice.starts_with(digits_string[idx])) {
-                if (!has_digits) {
-                  firstDigit = idx + 1;
-                  has_digits = true;
-                }
-                lastDigit = idx + 1;
-                break;
+                firstDigit = idx + 1;
+                goto endforward;  // Don't do that at home, I'm too lazy to create function
               }
             }
           }
         }
-        if (has_digits)
-          acc_part2 += firstDigit * 10 + lastDigit;
+        endforward:
+        // backward
+        for (int i = line.size() - 1; i >= 0; --i) {
+          const auto slice = line.substr(i);
+          if (const int digit = slice[0] - '0'; digit >= 0 && digit < 10) {
+            lastDigit = digit;
+            break;
+          } else {
+            for (int idx = 0; idx < digits_string.size(); ++idx) {
+              if (slice.starts_with(digits_string[idx])) {
+                lastDigit = idx + 1;
+                goto endbackward;
+              }
+            }
+          }
+        }
+        endbackward:
+        acc_part2 += firstDigit * 10 + lastDigit;
       }
     };
 

@@ -24,7 +24,7 @@ cargo build --release
 
 | Day   | Description                | Tips  |
 |--     |--                          |--     |
-| Day01 [<sup>puzzle</sup>](https://adventofcode.com/2023/day/1 ) [<sup>solution</sup>](src/day01.zig) | Max of range                 | -     |
+| Day01 [<sup>puzzle</sup>](https://adventofcode.com/2023/day/1 ) [<sup>solution</sup>](src/day01.zig) | Find digit and literal digit | -     |
 
 
 ## Some Timing :
@@ -37,7 +37,7 @@ In Rust
 Rust day01 in               127.08 us : part1=54304      part2=54418
 
 In C++
-C++  day01 in              105.425 us : part1=54304      part2=54418
+C++  day01 in               49.191 us : part1=54304     part2=54418
 
 ```
 
