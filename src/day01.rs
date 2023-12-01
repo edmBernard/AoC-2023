@@ -1,4 +1,5 @@
 use std::time::Instant;
+use std::iter::zip;
 
 type Result<T> = ::std::result::Result<T, Box<dyn (::std::error::Error)>>;
 
@@ -35,28 +36,18 @@ fn main() -> Result<()> {
       let mut parsed_line: Vec<u64> = vec![];
       let line_len = line_str.len();
       // We use this method because word can overlap like "nineight"
-      for i in 0..line_len {
+      let digits_string = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+      'outer: for i in 0..line_len {
         let slice = &line_str[i..];
-        if let Some(d) = slice.chars().nth(0).unwrap().to_digit(10) {
+        if let Some(d) = slice.chars().nth(0).ok_or("Failed to get first digit")?.to_digit(10) {
           parsed_line.push(d as u64);
-        } else if slice.starts_with("one") {
-            parsed_line.push(1);
-        } else if slice.starts_with("two") {
-            parsed_line.push(2);
-        } else if slice.starts_with("three") {
-            parsed_line.push(3);
-        } else if slice.starts_with("four") {
-            parsed_line.push(4);
-        } else if slice.starts_with("five") {
-            parsed_line.push(5);
-        } else if slice.starts_with("six") {
-            parsed_line.push(6);
-        } else if slice.starts_with("seven") {
-            parsed_line.push(7);
-        } else if slice.starts_with("eight") {
-            parsed_line.push(8);
-        } else if slice.starts_with("nine") {
-            parsed_line.push(9);
+        } else {
+          for (num, str) in zip(1.., digits_string.iter()) {
+            if slice.starts_with(str) {
+              parsed_line.push(num);
+              continue 'outer;
+            }
+          }
         }
       }
       let parsed_len = parsed_line.len();

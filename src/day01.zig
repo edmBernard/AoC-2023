@@ -65,32 +65,22 @@ pub fn main() !void {
             }
             // part2
             {
+                var digits_string = [_][]const u8{ "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
                 var parsedLine = std.ArrayList(u64).init(allocator);
                 defer parsedLine.deinit();
                 // We use this method because word can overlap like "nineight"
-                for (0..line.len) |i| {
+                outer: for (0..line.len) |i| {
                     var slice = line[i..];
                     var digit = slice[0] - '0';
                     if (digit >= 0 and digit < 10) {
                         try parsedLine.append(digit);
-                    } else if (std.mem.startsWith(u8, slice, "one")) {
-                        try parsedLine.append(1);
-                    } else if (std.mem.startsWith(u8, slice, "two")) {
-                        try parsedLine.append(2);
-                    } else if (std.mem.startsWith(u8, slice, "three")) {
-                        try parsedLine.append(3);
-                    } else if (std.mem.startsWith(u8, slice, "four")) {
-                        try parsedLine.append(4);
-                    } else if (std.mem.startsWith(u8, slice, "five")) {
-                        try parsedLine.append(5);
-                    } else if (std.mem.startsWith(u8, slice, "six")) {
-                        try parsedLine.append(6);
-                    } else if (std.mem.startsWith(u8, slice, "seven")) {
-                        try parsedLine.append(7);
-                    } else if (std.mem.startsWith(u8, slice, "eight")) {
-                        try parsedLine.append(8);
-                    } else if (std.mem.startsWith(u8, slice, "nine")) {
-                        try parsedLine.append(9);
+                    } else {
+                        for (digits_string, 1..) |str, num| {
+                            if (std.mem.startsWith(u8, slice, str)) {
+                                try parsedLine.append(num);
+                                continue :outer;
+                            }
+                        }
                     }
                 }
                 if (parsedLine.items.len > 0) {
