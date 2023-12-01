@@ -23,54 +23,59 @@ fn main() -> Result<()> {
       // part1
       {
         // we can do the part1 with a range notation (filter_map) but it's super slow
-        let mut has_digits = false;
         let mut first_digits = 0;
         let mut last_digits = 0;
-        for i in 0..line_str.len() {
+        'forward: for i in 0..line_str.len() {
           let slice = &line_str[i..];
           if let Some(d) = slice.chars().next().ok_or("Failed to get first char")?.to_digit(10) {
-            if !has_digits {
-              first_digits = d;
-              has_digits = true;
-            }
-            last_digits = d;
+            first_digits = d;
+            break 'forward;
           }
         }
-        if has_digits {
-          acc_part1 += first_digits * 10 + last_digits;
+        'backward: for i in (0..line_str.len()).rev() {
+          let slice = &line_str[i..];
+          if let Some(d) = slice.chars().next().ok_or("Failed to get first char")?.to_digit(10) {
+            last_digits = d;
+            break 'backward;
+          }
         }
+        acc_part1 += first_digits * 10 + last_digits;
       }
       // part2
       {
-        let mut has_digits = false;
         let mut first_digits = 0;
         let mut last_digits = 0;
         // We use this method because word can overlap like "nineight"
         let digits_string = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
-        'outer: for i in 0..line_str.len() {
+        'forward: for i in 0..line_str.len() {
           let slice = &line_str[i..];
           if let Some(d) = slice.chars().next().ok_or("Failed to get first char")?.to_digit(10) {
-            if !has_digits {
               first_digits = d;
-              has_digits = true;
-            }
-            last_digits = d;
+              break 'forward;
           } else {
             for (idx, str) in digits_string.iter().enumerate() {
               if slice.starts_with(str) {
-                if !has_digits {
-                  first_digits = (idx + 1) as u32;
-                  has_digits = true;
-                }
-                last_digits = (idx + 1) as u32;
-                continue 'outer;
+                first_digits = (idx + 1) as u32;
+                break 'forward;
               }
             }
           }
         }
-        if has_digits {
-          acc_part2 += first_digits * 10 + last_digits;
+        'backward: for i in (0..line_str.len()).rev() {
+          let slice = &line_str[i..];
+          if let Some(d) = slice.chars().next().ok_or("Failed to get first char")?.to_digit(10) {
+            last_digits = d;
+              break 'backward;
+          } else {
+            for (idx, str) in digits_string.iter().enumerate() {
+              if slice.starts_with(str) {
+                last_digits = (idx + 1) as u32;
+                break 'backward;
+              }
+            }
+          }
         }
+        acc_part2 += first_digits * 10 + last_digits;
       }
     }
     part1 = acc_part1 as u64;

@@ -39,14 +39,12 @@ pub fn main() !void {
         while (it.next()) |line| {
             // part1
             {
-                var has_digits = false;
                 var firstDigit: u32 = 0;
                 var lastDigit: u32 = 0;
                 forward: for (0..line.len) |idx| {
                     var digit = line[idx] - '0';
                     if (digit >= 0 and digit < 10) {
                         firstDigit = digit;
-                        has_digits = true;
                         break :forward;
                     }
                 }
@@ -57,14 +55,11 @@ pub fn main() !void {
                         break :backward;
                     }
                 }
-                if (has_digits) {
-                    acc_part1 += firstDigit * 10 + lastDigit;
-                }
+                acc_part1 += firstDigit * 10 + lastDigit;
             }
             // part2
             {
                 var digits_string = [_][]const u8{ "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
-                var has_digits = false;
                 var firstDigit: u64 = 0;
                 var lastDigit: u64 = 0;
                 // We use this method because word can overlap like "nineight"
@@ -72,14 +67,12 @@ pub fn main() !void {
                     var digit = line[idx] - '0';
                     if (digit >= 0 and digit < 10) {
                         firstDigit = digit;
-                        has_digits = true;
                         break :forward;
                     } else {
                         var slice = line[idx..];
                         for (digits_string, 1..) |str, value| {
                             if (std.mem.startsWith(u8, slice, str)) {
                                 firstDigit = value;
-                                has_digits = true;
                                 break :forward;
                             }
                         }
@@ -101,9 +94,7 @@ pub fn main() !void {
                         }
                     }
                 }
-                if (has_digits) {
-                    acc_part2 += firstDigit * 10 + lastDigit;
-                }
+                acc_part2 += firstDigit * 10 + lastDigit;
             }
         }
         part1 = acc_part1;

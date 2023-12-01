@@ -34,7 +34,7 @@ In Zig
 Zig  day01 in                64.88 us : part1=54304      part2=54418
 
 In Rust
-Rust day01 in               127.08 us : part1=54304      part2=54418
+Rust day01 in                66.89 us : part1=54304      part2=54418
 
 In C++
 C++  day01 in               49.191 us : part1=54304     part2=54418
