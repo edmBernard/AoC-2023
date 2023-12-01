@@ -4,14 +4,6 @@ pub const std_options = struct {
     pub const log_level = .info;
 };
 
-fn sum(array: []u64) u64 {
-    var acc: u64 = 0;
-    for (array) |value| {
-        acc += value;
-    }
-    return acc;
-}
-
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
@@ -41,12 +33,8 @@ pub fn main() !void {
         defer allocator.free(read_buf);
         var it = std.mem.splitAny(u8, read_buf, "\n");
 
-        var acc: u64 = 0;
-        _ = acc;
-        var digits1 = std.ArrayList(u64).init(allocator);
-        defer digits1.deinit();
-        var digits2 = std.ArrayList(u64).init(allocator);
-        defer digits2.deinit();
+        var acc_part1: u64 = 0;
+        var acc_part2: u64 = 0;
 
         while (it.next()) |line| {
             // part1
@@ -60,7 +48,7 @@ pub fn main() !void {
                     }
                 }
                 if (parsedLine.items.len > 0) {
-                    try digits1.append(parsedLine.items[0] * 10 + parsedLine.items[parsedLine.items.len - 1]);
+                    acc_part1 += parsedLine.items[0] * 10 + parsedLine.items[parsedLine.items.len - 1];
                 }
             }
             // part2
@@ -84,12 +72,12 @@ pub fn main() !void {
                     }
                 }
                 if (parsedLine.items.len > 0) {
-                    try digits2.append(parsedLine.items[0] * 10 + parsedLine.items[parsedLine.items.len - 1]);
+                    acc_part2 += parsedLine.items[0] * 10 + parsedLine.items[parsedLine.items.len - 1];
                 }
             }
         }
-        part1 = sum(digits1.items);
-        part2 = sum(digits2.items);
+        part1 = acc_part1;
+        part2 = acc_part2;
     }
     var tac: i64 = std.time.microTimestamp() - tic;
     std.log.info("Zig  day01 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });

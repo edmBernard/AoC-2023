@@ -110,9 +110,9 @@ int main(int argc, char *argv[]) {
 
     const std::string input_raw = ReadToString(argv[1]);
 
-    std::vector<uint64_t> parsedLine1;
-    std::vector<uint64_t> parsedLine2;
-    constexpr std::array<std::string_view, 9> digits_string{"one", "two", "three", "four", "five", "six", "seven", "eight", "nine"};
+    int acc_part1 = 0;
+    int acc_part2 = 0;
+    const std::array<std::string_view, 9> digits_string{"one", "two", "three", "four", "five", "six", "seven", "eight", "nine"};
 
     for (auto line : IteratorOnLines(input_raw)) {
       // part 1
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
           }
         }
         if (digits.size() > 0)
-          parsedLine1.push_back(digits[0] * 10 + digits[digits.size() - 1]);
+          acc_part1 += digits[0] * 10 + digits[digits.size() - 1];
       }
       // part2
       {
@@ -145,12 +145,12 @@ int main(int argc, char *argv[]) {
           }
         }
         if (digits.size() > 0)
-          parsedLine2.push_back(digits[0] * 10 + digits[digits.size() - 1]);
+          acc_part2 += digits[0] * 10 + digits[digits.size() - 1];
       }
     };
 
-    part1 = std::reduce(parsedLine1.begin(), parsedLine1.end());
-    part2 = std::reduce(parsedLine2.begin(), parsedLine2.end());
+    part1 = acc_part1;
+    part2 = acc_part1;
   }
 
   std::chrono::duration<double, std::micro> elapsed_temp = std::chrono::high_resolution_clock::now() - start_temp;

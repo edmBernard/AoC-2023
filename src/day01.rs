@@ -17,8 +17,8 @@ fn main() -> Result<()> {
   let nrun = 10000;
 
   for _ in 0..nrun {
-    let mut digits1: Vec<i32> = Vec::new();
-    let mut digits2: Vec<u64> = Vec::new();
+    let mut acc_part1 = 0;
+    let mut acc_part2 = 0;
     for line in std::fs::read_to_string(filename)?.lines() {
       let line_str = line;
       // part1
@@ -30,7 +30,7 @@ fn main() -> Result<()> {
         .collect::<Vec<_>>();
       let parsed_len = parsed_line.len();
       if parsed_len > 0 {
-        digits1.push(parsed_line[0] * 10 + parsed_line[parsed_len - 1]);
+        acc_part1 += parsed_line[0] * 10 + parsed_line[parsed_len - 1];
       }
       // part2
       let mut parsed_line: Vec<u64> = vec![];
@@ -52,11 +52,11 @@ fn main() -> Result<()> {
       }
       let parsed_len = parsed_line.len();
       if parsed_line.len() > 0 {
-        digits2.push(parsed_line[0] * 10 + parsed_line[parsed_len - 1]);
+        acc_part2 += parsed_line[0] * 10 + parsed_line[parsed_len - 1];
       }
     }
-    part1 = digits1.iter().sum::<i32>() as u64;
-    part2 = digits2.iter().sum();
+    part1 = acc_part1 as u64;
+    part2 = acc_part2 as u64;
   }
   let duration = now.elapsed().as_micros();
   println!(
