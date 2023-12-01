@@ -22,13 +22,13 @@ fn main() -> Result<()> {
       let line_str = line;
       // part1
       {
-        // we can do the part1 with a range notation but it's super slow
+        // we can do the part1 with a range notation (filter_map) but it's super slow
         let mut has_digits = false;
         let mut first_digits = 0;
         let mut last_digits = 0;
         for i in 0..line_str.len() {
           let slice = &line_str[i..];
-          if let Some(d) = slice.chars().next().ok_or("Failed to get first digit")?.to_digit(10) {
+          if let Some(d) = slice.chars().next().ok_or("Failed to get first char")?.to_digit(10) {
             if !has_digits {
               first_digits = d;
               has_digits = true;
@@ -49,7 +49,7 @@ fn main() -> Result<()> {
         let digits_string = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
         'outer: for i in 0..line_str.len() {
           let slice = &line_str[i..];
-          if let Some(d) = slice.chars().next().ok_or("Failed to get first digit")?.to_digit(10) {
+          if let Some(d) = slice.chars().next().ok_or("Failed to get first char")?.to_digit(10) {
             if !has_digits {
               first_digits = d;
               has_digits = true;

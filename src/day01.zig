@@ -42,14 +42,19 @@ pub fn main() !void {
                 var has_digits = false;
                 var firstDigit: u32 = 0;
                 var lastDigit: u32 = 0;
-                for (line) |c| {
-                    var digit = c - '0';
+                forward: for (0..line.len) |idx| {
+                    var digit = line[idx] - '0';
                     if (digit >= 0 and digit < 10) {
-                        if (!has_digits) {
-                            firstDigit = digit;
-                            has_digits = true;
-                        }
+                        firstDigit = digit;
+                        has_digits = true;
+                        break :forward;
+                    }
+                }
+                backward: for (0..line.len) |idx| {
+                    var digit = line[line.len - idx - 1] - '0';
+                    if (digit >= 0 and digit < 10) {
                         lastDigit = digit;
+                        break :backward;
                     }
                 }
                 if (has_digits) {
@@ -63,24 +68,35 @@ pub fn main() !void {
                 var firstDigit: u64 = 0;
                 var lastDigit: u64 = 0;
                 // We use this method because word can overlap like "nineight"
-                outer: for (0..line.len) |i| {
-                    var slice = line[i..];
-                    var digit = slice[0] - '0';
+                forward: for (0..line.len) |idx| {
+                    var digit = line[idx] - '0';
                     if (digit >= 0 and digit < 10) {
-                        if (!has_digits) {
-                            firstDigit = digit;
-                            has_digits = true;
-                        }
-                        lastDigit = digit;
+                        firstDigit = digit;
+                        has_digits = true;
+                        break :forward;
                     } else {
+                        var slice = line[idx..];
                         for (digits_string, 1..) |str, value| {
                             if (std.mem.startsWith(u8, slice, str)) {
-                                if (!has_digits) {
-                                    firstDigit = value;
-                                    has_digits = true;
-                                }
+                                firstDigit = value;
+                                has_digits = true;
+                                break :forward;
+                            }
+                        }
+                    }
+                }
+                backward: for (0..line.len) |idx| {
+                    var ridx = line.len - idx - 1;
+                    var digit = line[ridx] - '0';
+                    if (digit >= 0 and digit < 10) {
+                        lastDigit = digit;
+                        break :backward;
+                    } else {
+                        var slice = line[ridx..];
+                        for (digits_string, 1..) |str, value| {
+                            if (std.mem.startsWith(u8, slice, str)) {
                                 lastDigit = value;
-                                continue :outer;
+                                break :backward;
                             }
                         }
                     }
