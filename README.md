@@ -24,8 +24,8 @@ cargo build --release
 
 | Day   | Solution | Description                | Tips  |
 |--     |--        |--                          |--     |
-| Day01 <sup>[puzzle](https://adventofcode.com/2023/day/1) | [Zig](src/day01.zig) [Rust](src/day01.rs) [C++](src/day01.cpp) | Find digit and literal digit | Store only useful digits, do the search in both direction |
-| Day02 <sup>[puzzle](https://adventofcode.com/2023/day/2) | [Zig](src/day02.zig) [Rust](src/day02.rs) [C++](src/day02.cpp) | Find digit and literal digit | Store only useful digits, do the search in both direction |
+| Day01 <sup>[puzzle](https://adventofcode.com/2023/day/1) | [Zig](src/day01.zig) [Rust](src/day01.rs) [C++](src/day01.cpp) | Find digit and literal digit | Store only useful digits, do the search in both direction, digit name can overlap |
+| Day02 <sup>[puzzle](https://adventofcode.com/2023/day/2) | [Zig](src/day02.zig) | Find number of colored cube |  |
 
 
 ## Some Timing :
@@ -33,6 +33,7 @@ cargo build --release
 ```
 In Zig
 Zig  day01 in                64.88 us : part1=54304      part2=54418
+Zig  day02 in                58.48 us : part1=2348       part2=76008
 
 In Rust
 Rust day01 in                66.89 us : part1=54304      part2=54418
