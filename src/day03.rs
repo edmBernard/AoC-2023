@@ -83,7 +83,7 @@ fn main() -> Result<()> {
   }
   let duration = now.elapsed().as_micros();
   println!(
-    "info: Rust day02 in {:>20.2} us : part1={:<10} part2={:<10}",
+    "info: Rust day03 in {:>20.2} us : part1={:<10} part2={:<10}",
     duration as f32 / nrun as f32,
     part1,
     part2

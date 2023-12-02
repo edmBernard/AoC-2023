@@ -27,4 +27,12 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     b.installArtifact(exeDay02);
+
+    const exeDay03 = b.addExecutable(.{
+        .name = "day03",
+        .root_source_file = .{ .path = "src/day03.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+    b.installArtifact(exeDay03);
 }
