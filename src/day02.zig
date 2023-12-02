@@ -41,12 +41,10 @@ pub fn main() !void {
         defer allocator.free(read_buf);
         var it = std.mem.splitAny(u8, read_buf, "\n");
 
-        var possible_game_idx = std.ArrayList(u32).init(allocator);
-        defer possible_game_idx.deinit();
-
         const colors_string = [_][]const u8{ "red", "green", "blue" };
-        // bag content only 12 red cubes, 13 green cubes, and 14 blue cubes
+        // bag contain only 12 red cubes, 13 green cubes, and 14 blue cubes
         const color_total_cube = [3]i32{ 12, 13, 14 };
+        var acc_part1: u64 = 0;
         var acc_part2: u64 = 0;
 
         // Loop on games
@@ -67,29 +65,31 @@ pub fn main() !void {
                 // Split per color
                 var split_color = std.mem.split(u8, draw_sample, ",");
                 while (split_color.next()) |color_sample| {
-                    for (colors_string, 0..) |color_string, color_pos| {
+                    for (colors_string, color_total_cube, &color_min_cube) |color_string, total_cube, *min_cube| {
                         const color_idx = std.mem.lastIndexOf(u8, color_sample, color_string);
-                        if (color_idx != null) {
-                            // we have to trim whitespace
-                            const num = try std.fmt.parseInt(i32, color_sample[1 .. color_idx.? - 1], 10);
-                            // part1
-                            if (is_possible_game and num > color_total_cube[color_pos]) {
-                                is_possible_game = false;
-                            }
-                            // part2
-                            if (num > color_min_cube[color_pos]) {
-                                color_min_cube[color_pos] = num;
-                            }
+                        if (color_idx == null)
+                            continue;
+
+                        // we have to trim whitespace
+                        const num = try std.fmt.parseInt(i32, std.mem.trim(u8, color_sample[0..color_idx.?], " "), 10);
+                        // part1
+                        if (is_possible_game and num > total_cube) {
+                            is_possible_game = false;
+                        }
+                        // part2
+                        if (num > min_cube.*) {
+                            min_cube.* = num;
                         }
                     }
                 }
             }
+
             if (is_possible_game) {
-                try possible_game_idx.append(game_idx);
+                acc_part1 += game_idx;
             }
             acc_part2 += @intCast(color_min_cube[0] * color_min_cube[1] * color_min_cube[2]);
         }
-        part1 = sum(possible_game_idx.items);
+        part1 = acc_part1;
         part2 = acc_part2;
     }
     var tac: i64 = std.time.microTimestamp() - tic;
