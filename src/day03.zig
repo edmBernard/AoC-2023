@@ -56,6 +56,8 @@ pub fn main() !void {
         };
         var number_list = std.ArrayList(NumberPos).init(allocator);
         defer number_list.deinit();
+        var gear_list = std.ArrayList(usize).init(allocator);
+        defer gear_list.deinit();
         var number_idx: i32 = -1;
         var increment_number_index = true;
 
@@ -84,6 +86,9 @@ pub fn main() !void {
                     try puzzle_input.append(TileType{ .number = number_list.items[@intCast(number_idx)].number });
                     increment_number_index = false;
                 } else {
+                    if (c == '*') {
+                        try gear_list.append(puzzle_input.items.len);
+                    }
                     try puzzle_input.append(TileType{ .symbol = c });
                     increment_number_index = true;
                 }
@@ -118,9 +123,45 @@ pub fn main() !void {
                 } else {
                     acc_part1 -= n.number;
                 }
+            }
+        }
 
-                // std.debug.print("log={}\n", .{std.math.log10_int(n.number)});
-                // std.debug.print("n={}, p={}, puzzle={}\n", .{ n.number, n.pos, puzzle_input.items[n.pos] });
+        // part2
+        {
+            for (gear_list.items) |gear_idx| {
+                std.debug.print("item = {c}", .{puzzle_input.items[gear_idx].symbol});
+            }
+            const dirx = [_]i32{ 1, 0, -1, -1, -1, 0, 1, 1 };
+            const diry = [_]i32{ 1, 1, 1, 0, -1, -1, -1, 0 };
+            const width = line_size.?;
+            const height = puzzle_input.items.len / line_size.?;
+
+            for (gear_list.items) |gear_idx| {
+                var nums = std.ArrayList(u32).init(allocator);
+                defer nums.deinit();
+
+                dir: for (dirx, diry) |dx, dy| {
+                    var x: i32 = @intCast(@mod(gear_idx, width));
+                    var y: i32 = @intCast(@divFloor(gear_idx, width));
+                    const new_x: usize = @intCast(std.math.clamp(x + dx, 0, @as(i32, @intCast(width - 1))));
+                    const new_y: usize = @intCast(std.math.clamp(y + dy, 0, @as(i32, @intCast(height - 1))));
+                    // std.debug.print("x={} y={}, w={}, h={}\n", .{ x, y, width, height });
+                    // std.debug.print("nx={} ny={} i={} s={}\n", .{ new_x, new_y, new_x + width * new_y, puzzle_input.items.len });
+                    switch (puzzle_input.items[new_x + width * new_y]) {
+                        TileTag.symbol => continue,
+                        TileTag.nothing => continue,
+                        TileTag.number => |value| {
+                            for (nums.items) |num| {
+                                if (num == value)
+                                    continue :dir;
+                            }
+                            try nums.append(value);
+                        },
+                    }
+                }
+                if (nums.items.len > 1) {
+                    acc_part2 += nums.items[0] * nums.items[1];
+                }
             }
         }
         part1 = acc_part1;
