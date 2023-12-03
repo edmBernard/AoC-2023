@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) {
   }
 
   std::chrono::duration<double, std::micro> elapsed_temp = std::chrono::high_resolution_clock::now() - start_temp;
-  std::cout << "info: C++  day03 in \t\t" << elapsed_temp.count() / nruns << " us : part1=" << part1 << " \tpart2=" << part2 << std::endl;
+  std::cout << "info: C++  day04 in \t\t" << elapsed_temp.count() / nruns << " us : part1=" << part1 << " \tpart2=" << part2 << std::endl;
 
   return 0;
 }
