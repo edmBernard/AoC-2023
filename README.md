@@ -34,6 +34,7 @@ cargo build --release
 In Zig
 Zig  day01 in                64.88 us : part1=54304      part2=54418
 Zig  day02 in                44.50 us : part1=2348       part2=76008
+Zig  day03 in               127.06 us : part1=527364     part2=79026871
 
 In Rust
 Rust day01 in                66.89 us : part1=54304      part2=54418

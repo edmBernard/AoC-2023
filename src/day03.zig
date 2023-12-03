@@ -24,7 +24,7 @@ pub fn main() !void {
     var tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
-    const nrun = 1;
+    const nrun = 10000;
     for (0..nrun) |_| {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
@@ -36,54 +36,51 @@ pub fn main() !void {
         var acc_part1: u64 = 0;
         var acc_part2: u64 = 0;
 
+        var line_size: ?usize = null;
+
+        // parsed puzzle structure
         const TileTag = enum { number, symbol, nothing };
-        const TileType = union(TileTag) { number: u32, symbol: u8, nothing: bool };
+        const TileType = union(TileTag) { number: u32, symbol: u8, nothing: void };
         var puzzle_input = std.ArrayList(TileType).init(allocator);
         defer puzzle_input.deinit();
-        var all_part_number = std.AutoHashMap(u32, void).init(allocator);
-        defer all_part_number.deinit();
 
-        var line_size: ?u64 = null;
-
-        var sum_all_part_number: u64 = 0;
-        _ = sum_all_part_number;
-        var sum_not_part_number: u64 = 0;
-        _ = sum_not_part_number;
-
+        // list of numbers with their index in input_puzzle
         const NumberPos = struct {
             number: u32,
             pos: usize,
         };
         var number_list = std.ArrayList(NumberPos).init(allocator);
         defer number_list.deinit();
+        var increment_number_index = true;
+        var number_idx: ?usize = null;
+
+        // list of gear index in input_puzzle
         var gear_list = std.ArrayList(usize).init(allocator);
         defer gear_list.deinit();
-        var number_idx: i32 = -1;
-        var increment_number_index = true;
 
+        // parse puzzle
         while (it.next()) |line| {
             if (line.len == 0)
                 continue;
-            // parse puzzle
-
             line_size = line.len;
+            // create complete number list
+            // that allow to replace each digit by it's complete number (ex: the 4 of 467 is replace by 467)
             var it_number = std.mem.tokenizeAny(u8, line, ".*+-$%#&/@=");
             while (it_number.next()) |number_string| {
                 const number = std.fmt.parseInt(u32, number_string, 10) catch continue;
                 try number_list.append(.{ .number = number, .pos = 0 });
             }
-            std.debug.print("number_list size : {}\n", .{number_list.items.len});
-            std.debug.print(" line : {s}\n", .{line});
+            // create input_puzzle
             for (line) |c| {
                 if (c == '.') {
-                    try puzzle_input.append(TileType{ .nothing = false });
+                    try puzzle_input.append(TileType{ .nothing = {} });
                     increment_number_index = true;
                 } else if (std.ascii.isDigit(c)) {
                     if (increment_number_index) {
-                        number_idx += 1;
-                        number_list.items[@intCast(number_idx)].pos = puzzle_input.items.len;
+                        number_idx = if (number_idx == null) 0 else number_idx.? + 1;
+                        number_list.items[number_idx.?].pos = puzzle_input.items.len;
                     }
-                    try puzzle_input.append(TileType{ .number = number_list.items[@intCast(number_idx)].number });
+                    try puzzle_input.append(TileType{ .number = number_list.items[number_idx.?].number });
                     increment_number_index = false;
                 } else {
                     if (c == '*') {
@@ -94,28 +91,25 @@ pub fn main() !void {
                 }
             }
         }
+        // common const for both part
+        const dirx = [_]i32{ 1, 0, -1, -1, -1, 0, 1, 1 };
+        const diry = [_]i32{ 1, 1, 1, 0, -1, -1, -1, 0 };
+        const width = line_size.?;
+        const height = puzzle_input.items.len / line_size.?;
+
         // part1
         {
-            const dirx = [_]i32{ 1, 0, -1, -1, -1, 0, 1, 1 };
-            const diry = [_]i32{ 1, 1, 1, 0, -1, -1, -1, 0 };
-            const width = line_size.?;
-            const height = puzzle_input.items.len / line_size.?;
-
             for (number_list.items) |n| {
                 acc_part1 += n.number;
                 outer: for (0..std.math.log10_int(n.number) + 1) |offset| {
+                    var x: i32 = @intCast(@mod(n.pos + offset, width));
+                    var y: i32 = @intCast(@divFloor(n.pos, width));
+
                     for (dirx, diry) |dx, dy| {
-                        var x: i32 = @intCast(@mod(n.pos + offset, width));
-                        var y: i32 = @intCast(@divFloor(n.pos, width));
                         const new_x: usize = @intCast(std.math.clamp(x + dx, 0, @as(i32, @intCast(width - 1))));
                         const new_y: usize = @intCast(std.math.clamp(y + dy, 0, @as(i32, @intCast(height - 1))));
-                        // std.debug.print("x={} y={}, w={}, h={}\n", .{ x, y, width, height });
-                        // std.debug.print("nx={} ny={} i={} s={}\n", .{ new_x, new_y, new_x + width * new_y, puzzle_input.items.len });
                         switch (puzzle_input.items[new_x + width * new_y]) {
-                            TileTag.symbol => {
-                                // std.debug.print("symbol found\n", .{});
-                                break :outer;
-                            },
+                            TileTag.symbol => break :outer,
                             TileTag.nothing => continue,
                             TileTag.number => continue,
                         }
@@ -129,24 +123,16 @@ pub fn main() !void {
         // part2
         {
             for (gear_list.items) |gear_idx| {
-                std.debug.print("item = {c}", .{puzzle_input.items[gear_idx].symbol});
-            }
-            const dirx = [_]i32{ 1, 0, -1, -1, -1, 0, 1, 1 };
-            const diry = [_]i32{ 1, 1, 1, 0, -1, -1, -1, 0 };
-            const width = line_size.?;
-            const height = puzzle_input.items.len / line_size.?;
-
-            for (gear_list.items) |gear_idx| {
+                // list of numbers adjacent to the gear
                 var nums = std.ArrayList(u32).init(allocator);
                 defer nums.deinit();
 
+                var x: i32 = @intCast(@mod(gear_idx, width));
+                var y: i32 = @intCast(@divFloor(gear_idx, width));
+
                 dir: for (dirx, diry) |dx, dy| {
-                    var x: i32 = @intCast(@mod(gear_idx, width));
-                    var y: i32 = @intCast(@divFloor(gear_idx, width));
                     const new_x: usize = @intCast(std.math.clamp(x + dx, 0, @as(i32, @intCast(width - 1))));
                     const new_y: usize = @intCast(std.math.clamp(y + dy, 0, @as(i32, @intCast(height - 1))));
-                    // std.debug.print("x={} y={}, w={}, h={}\n", .{ x, y, width, height });
-                    // std.debug.print("nx={} ny={} i={} s={}\n", .{ new_x, new_y, new_x + width * new_y, puzzle_input.items.len });
                     switch (puzzle_input.items[new_x + width * new_y]) {
                         TileTag.symbol => continue,
                         TileTag.nothing => continue,
