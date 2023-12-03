@@ -45,11 +45,11 @@ pub fn main() !void {
         defer puzzle_input.deinit();
 
         // list of numbers with their index in input_puzzle
-        const NumberPos = struct {
+        const NumberWithPos = struct {
             number: u32,
             pos: usize,
         };
-        var number_list = std.ArrayList(NumberPos).init(allocator);
+        var number_list = std.ArrayList(NumberWithPos).init(allocator);
         defer number_list.deinit();
         var increment_number_index = true;
         var number_idx: ?usize = null;
@@ -63,30 +63,32 @@ pub fn main() !void {
             if (line.len == 0)
                 continue;
             line_size = line.len;
+            try puzzle_input.ensureUnusedCapacity(line_size.?);
+
             // create complete number list
             // that allow to replace each digit by it's complete number (ex: the 4 of 467 is replace by 467)
             var it_number = std.mem.tokenizeAny(u8, line, ".*+-$%#&/@=");
             while (it_number.next()) |number_string| {
-                const number = std.fmt.parseInt(u32, number_string, 10) catch continue;
+                const number = try std.fmt.parseInt(u32, number_string, 10);
                 try number_list.append(.{ .number = number, .pos = 0 });
             }
             // create input_puzzle
             for (line) |c| {
                 if (c == '.') {
-                    try puzzle_input.append(TileType{ .nothing = {} });
+                    puzzle_input.appendAssumeCapacity(TileType{ .nothing = {} });
                     increment_number_index = true;
                 } else if (std.ascii.isDigit(c)) {
                     if (increment_number_index) {
                         number_idx = if (number_idx == null) 0 else number_idx.? + 1;
                         number_list.items[number_idx.?].pos = puzzle_input.items.len;
                     }
-                    try puzzle_input.append(TileType{ .number = number_list.items[number_idx.?].number });
+                    puzzle_input.appendAssumeCapacity(TileType{ .number = number_list.items[number_idx.?].number });
                     increment_number_index = false;
                 } else {
                     if (c == '*') {
                         try gear_list.append(puzzle_input.items.len);
                     }
-                    try puzzle_input.append(TileType{ .symbol = c });
+                    puzzle_input.appendAssumeCapacity(TileType{ .symbol = c });
                     increment_number_index = true;
                 }
             }
