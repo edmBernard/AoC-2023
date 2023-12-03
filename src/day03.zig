@@ -24,77 +24,103 @@ pub fn main() !void {
     var tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
-    const nrun = 10000;
+    const nrun = 1;
     for (0..nrun) |_| {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
 
         var read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
         defer allocator.free(read_buf);
-        var it = std.mem.splitAny(u8, read_buf, "\n");
+        var it = std.mem.splitScalar(u8, read_buf, '\n');
 
         var acc_part1: u64 = 0;
         var acc_part2: u64 = 0;
 
+        const TileTag = enum { number, symbol, nothing };
+        const TileType = union(TileTag) { number: u32, symbol: u8, nothing: bool };
+        var puzzle_input = std.ArrayList(TileType).init(allocator);
+        defer puzzle_input.deinit();
+        var all_part_number = std.AutoHashMap(u32, void).init(allocator);
+        defer all_part_number.deinit();
+
+        var line_size: ?u64 = null;
+
+        var sum_all_part_number: u64 = 0;
+        _ = sum_all_part_number;
+        var sum_not_part_number: u64 = 0;
+        _ = sum_not_part_number;
+
+        const NumberPos = struct {
+            number: u32,
+            pos: usize,
+        };
+        var number_list = std.ArrayList(NumberPos).init(allocator);
+        defer number_list.deinit();
+        var number_idx: i32 = -1;
+        var increment_number_index = true;
+
         while (it.next()) |line| {
-            // part1
-            {
-                var firstDigit: u32 = 0;
-                var lastDigit: u32 = 0;
-                forward: for (0..line.len) |idx| {
-                    var digit = line[idx] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        firstDigit = digit;
-                        break :forward;
-                    }
-                }
-                backward: for (0..line.len) |idx| {
-                    var digit = line[line.len - idx - 1] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        lastDigit = digit;
-                        break :backward;
-                    }
-                }
-                acc_part1 += firstDigit * 10 + lastDigit;
+            if (line.len == 0)
+                continue;
+            // parse puzzle
+
+            line_size = line.len;
+            var it_number = std.mem.tokenizeAny(u8, line, ".*+-$%#&/@=");
+            while (it_number.next()) |number_string| {
+                const number = std.fmt.parseInt(u32, number_string, 10) catch continue;
+                try number_list.append(.{ .number = number, .pos = 0 });
             }
-            // part2
-            {
-                var digits_string = [_][]const u8{ "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
-                var firstDigit: u64 = 0;
-                var lastDigit: u64 = 0;
-                // We use this method because word can overlap like "nineight"
-                forward: for (0..line.len) |idx| {
-                    var digit = line[idx] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        firstDigit = digit;
-                        break :forward;
-                    } else {
-                        var slice = line[idx..];
-                        for (digits_string, 1..) |str, value| {
-                            if (std.mem.startsWith(u8, slice, str)) {
-                                firstDigit = value;
-                                break :forward;
-                            }
+            std.debug.print("number_list size : {}\n", .{number_list.items.len});
+            std.debug.print(" line : {s}\n", .{line});
+            for (line) |c| {
+                if (c == '.') {
+                    try puzzle_input.append(TileType{ .nothing = false });
+                    increment_number_index = true;
+                } else if (std.ascii.isDigit(c)) {
+                    if (increment_number_index) {
+                        number_idx += 1;
+                        number_list.items[@intCast(number_idx)].pos = puzzle_input.items.len;
+                    }
+                    try puzzle_input.append(TileType{ .number = number_list.items[@intCast(number_idx)].number });
+                    increment_number_index = false;
+                } else {
+                    try puzzle_input.append(TileType{ .symbol = c });
+                    increment_number_index = true;
+                }
+            }
+        }
+        // part1
+        {
+            const dirx = [_]i32{ 1, 0, -1, -1, -1, 0, 1, 1 };
+            const diry = [_]i32{ 1, 1, 1, 0, -1, -1, -1, 0 };
+            const width = line_size.?;
+            const height = puzzle_input.items.len / line_size.?;
+
+            for (number_list.items) |n| {
+                acc_part1 += n.number;
+                outer: for (0..std.math.log10_int(n.number) + 1) |offset| {
+                    for (dirx, diry) |dx, dy| {
+                        var x: i32 = @intCast(@mod(n.pos + offset, width));
+                        var y: i32 = @intCast(@divFloor(n.pos, width));
+                        const new_x: usize = @intCast(std.math.clamp(x + dx, 0, @as(i32, @intCast(width - 1))));
+                        const new_y: usize = @intCast(std.math.clamp(y + dy, 0, @as(i32, @intCast(height - 1))));
+                        // std.debug.print("x={} y={}, w={}, h={}\n", .{ x, y, width, height });
+                        // std.debug.print("nx={} ny={} i={} s={}\n", .{ new_x, new_y, new_x + width * new_y, puzzle_input.items.len });
+                        switch (puzzle_input.items[new_x + width * new_y]) {
+                            TileTag.symbol => {
+                                // std.debug.print("symbol found\n", .{});
+                                break :outer;
+                            },
+                            TileTag.nothing => continue,
+                            TileTag.number => continue,
                         }
                     }
+                } else {
+                    acc_part1 -= n.number;
                 }
-                backward: for (0..line.len) |idx| {
-                    var ridx = line.len - idx - 1;
-                    var digit = line[ridx] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        lastDigit = digit;
-                        break :backward;
-                    } else {
-                        var slice = line[ridx..];
-                        for (digits_string, 1..) |str, value| {
-                            if (std.mem.startsWith(u8, slice, str)) {
-                                lastDigit = value;
-                                break :backward;
-                            }
-                        }
-                    }
-                }
-                acc_part2 += firstDigit * 10 + lastDigit;
+
+                // std.debug.print("log={}\n", .{std.math.log10_int(n.number)});
+                // std.debug.print("n={}, p={}, puzzle={}\n", .{ n.number, n.pos, puzzle_input.items[n.pos] });
             }
         }
         part1 = acc_part1;
