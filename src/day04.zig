@@ -24,7 +24,7 @@ pub fn main() !void {
     var tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
-    const nrun = 10000;
+    const nrun = 1;
     for (0..nrun) |_| {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
@@ -37,64 +37,46 @@ pub fn main() !void {
         var acc_part2: u64 = 0;
 
         while (it.next()) |line| {
+            if (line.len == 0)
+                continue;
             // part1
-            {
-                var firstDigit: u32 = 0;
-                var lastDigit: u32 = 0;
-                forward: for (0..line.len) |idx| {
-                    var digit = line[idx] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        firstDigit = digit;
-                        break :forward;
-                    }
-                }
-                backward: for (0..line.len) |idx| {
-                    var digit = line[line.len - idx - 1] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        lastDigit = digit;
-                        break :backward;
-                    }
-                }
-                acc_part1 += firstDigit * 10 + lastDigit;
+            // Get game index
+            const column_idx = std.mem.indexOf(u8, line, ":");
+            const game_idx = try std.fmt.parseInt(u32, std.mem.trim(u8, line[5..column_idx.?], " "), 10);
+            std.debug.print("Card n: {d}\n", .{game_idx});
+
+            var number_series = std.mem.splitScalar(u8, line[column_idx.? + 1 ..], '|');
+            var winning_string = number_series.next().?;
+            var yours_string = number_series.next().?;
+
+            var winning_numbers = std.ArrayList(u64).init(allocator);
+            defer winning_numbers.deinit();
+
+            var winning_number_it = std.mem.tokenizeScalar(u8, winning_string, ' ');
+            while (winning_number_it.next()) |str| {
+                const number = try std.fmt.parseInt(u32, str, 10);
+                try winning_numbers.append(number);
             }
-            // part2
-            {
-                var digits_string = [_][]const u8{ "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
-                var firstDigit: u64 = 0;
-                var lastDigit: u64 = 0;
-                // We use this method because word can overlap like "nineight"
-                forward: for (0..line.len) |idx| {
-                    var digit = line[idx] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        firstDigit = digit;
-                        break :forward;
-                    } else {
-                        var slice = line[idx..];
-                        for (digits_string, 1..) |str, value| {
-                            if (std.mem.startsWith(u8, slice, str)) {
-                                firstDigit = value;
-                                break :forward;
-                            }
-                        }
+
+            var yours_numbers = std.ArrayList(u64).init(allocator);
+            defer yours_numbers.deinit();
+
+            var yours_number_it = std.mem.tokenizeScalar(u8, yours_string, ' ');
+            while (yours_number_it.next()) |str| {
+                const number = try std.fmt.parseInt(u32, str, 10);
+                try yours_numbers.append(number);
+            }
+            var number_match: u64 = 0;
+            for (winning_numbers.items) |winning_number| {
+                for (yours_numbers.items) |your_number| {
+                    if (your_number == winning_number) {
+                        number_match += 1;
                     }
                 }
-                backward: for (0..line.len) |idx| {
-                    var ridx = line.len - idx - 1;
-                    var digit = line[ridx] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        lastDigit = digit;
-                        break :backward;
-                    } else {
-                        var slice = line[ridx..];
-                        for (digits_string, 1..) |str, value| {
-                            if (std.mem.startsWith(u8, slice, str)) {
-                                lastDigit = value;
-                                break :backward;
-                            }
-                        }
-                    }
-                }
-                acc_part2 += firstDigit * 10 + lastDigit;
+            }
+            if (number_match > 0) {
+                acc_part1 += try std.math.powi(u64, 2, number_match - 1);
+                std.debug.print("Card n: {d}, match {d}\n", .{ game_idx, number_match });
             }
         }
         part1 = acc_part1;
