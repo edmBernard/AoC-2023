@@ -57,7 +57,7 @@ pub fn main() !void {
 
             // Get game index
             const column_idx = std.mem.indexOf(u8, line, ":");
-            const game_idx = try std.fmt.parseInt(u32, line[5..column_idx.?], 10);
+            const game_idx = try std.fmt.parseUnsigned(u32, line[5..column_idx.?], 10);
 
             // Split per color (we don't need to keep draws separated
             var split_color = std.mem.splitAny(u8, line[column_idx.? + 1 ..], ";,");
@@ -68,7 +68,7 @@ pub fn main() !void {
                         continue;
 
                     // we have to trim whitespace
-                    const num = try std.fmt.parseInt(i32, std.mem.trim(u8, color_sample[0..color_idx.?], " "), 10);
+                    const num = try std.fmt.parseUnsigned(i32, std.mem.trim(u8, color_sample[0..color_idx.?], " "), 10);
                     // part1
                     if (is_possible_game and num > total_cube) {
                         is_possible_game = false;

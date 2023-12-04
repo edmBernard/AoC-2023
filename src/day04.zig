@@ -32,7 +32,7 @@ pub fn main() !void {
     var tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
-    const nrun = 1;
+    const nrun = 10000;
     for (0..nrun) |_| {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
@@ -47,6 +47,7 @@ pub fn main() !void {
         // number of matching per card
         var scratch_match = std.ArrayList(u64).init(allocator);
         defer scratch_match.deinit();
+
         // number of repetition of card
         var scratch_rep = std.ArrayList(u64).init(allocator);
         defer scratch_rep.deinit();
@@ -54,11 +55,7 @@ pub fn main() !void {
         while (it.next()) |line| {
             if (line.len == 0)
                 continue;
-            // part1
-            // Get game index
             const column_idx = std.mem.indexOf(u8, line, ":");
-            const game_idx = try std.fmt.parseInt(u32, std.mem.trim(u8, line[5..column_idx.?], " "), 10);
-            std.debug.print("Card n: {d}\n", .{game_idx});
 
             var number_series = std.mem.splitScalar(u8, line[column_idx.? + 1 ..], '|');
             var winning_string = number_series.next().?;
@@ -69,7 +66,7 @@ pub fn main() !void {
 
             var winning_number_it = std.mem.tokenizeScalar(u8, winning_string, ' ');
             while (winning_number_it.next()) |str| {
-                const number = try std.fmt.parseInt(u32, str, 10);
+                const number = try std.fmt.parseUnsigned(u32, str, 10);
                 try winning_numbers.append(number);
             }
 
@@ -78,9 +75,10 @@ pub fn main() !void {
 
             var yours_number_it = std.mem.tokenizeScalar(u8, yours_string, ' ');
             while (yours_number_it.next()) |str| {
-                const number = try std.fmt.parseInt(u32, str, 10);
+                const number = try std.fmt.parseUnsigned(u32, str, 10);
                 try yours_numbers.append(number);
             }
+            // part1
             var number_match: u64 = 0;
             for (winning_numbers.items) |winning_number| {
                 for (yours_numbers.items) |your_number| {
@@ -91,18 +89,17 @@ pub fn main() !void {
             }
             if (number_match > 0) {
                 acc_part1 += try std.math.powi(u64, 2, number_match - 1);
-                std.debug.print("Card n: {d}, match {d}\n", .{ game_idx, number_match });
             }
             try scratch_match.append(number_match);
             try scratch_rep.append(1);
         }
+        // part2
         for (scratch_match.items, 0..) |match, offset| {
             for (0..match) |idx| {
                 scratch_rep.items[offset + idx + 1] += scratch_rep.items[offset];
             }
         }
-        for (scratch_rep.items, 0..) |rep, idx| {
-            std.debug.print("rep {}, idx:{}\n", .{ rep, idx });
+        for (scratch_rep.items) |rep| {
             acc_part2 += rep;
         }
         part1 = acc_part1;
