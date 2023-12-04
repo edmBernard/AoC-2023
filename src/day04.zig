@@ -4,6 +4,14 @@ pub const std_options = struct {
     pub const log_level = .info;
 };
 
+fn sum(array: []u64) u64 {
+    var acc: u64 = 0;
+    for (array) |value| {
+        acc += value;
+    }
+    return acc;
+}
+
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
@@ -35,6 +43,13 @@ pub fn main() !void {
 
         var acc_part1: u64 = 0;
         var acc_part2: u64 = 0;
+
+        // number of matching per card
+        var scratch_match = std.ArrayList(u64).init(allocator);
+        defer scratch_match.deinit();
+        // number of repetition of card
+        var scratch_rep = std.ArrayList(u64).init(allocator);
+        defer scratch_rep.deinit();
 
         while (it.next()) |line| {
             if (line.len == 0)
@@ -78,6 +93,17 @@ pub fn main() !void {
                 acc_part1 += try std.math.powi(u64, 2, number_match - 1);
                 std.debug.print("Card n: {d}, match {d}\n", .{ game_idx, number_match });
             }
+            try scratch_match.append(number_match);
+            try scratch_rep.append(1);
+        }
+        for (scratch_match.items, 0..) |match, offset| {
+            for (0..match) |idx| {
+                scratch_rep.items[offset + idx + 1] += scratch_rep.items[offset];
+            }
+        }
+        for (scratch_rep.items, 0..) |rep, idx| {
+            std.debug.print("rep {}, idx:{}\n", .{ rep, idx });
+            acc_part2 += rep;
         }
         part1 = acc_part1;
         part2 = acc_part2;
