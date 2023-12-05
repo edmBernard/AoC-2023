@@ -12,43 +12,16 @@ pub fn build(b: *std.Build) void {
     // b.setPreferredOptimizeMode(.ReleaseFast);
     const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseFast });
 
-    const exeDay01 = b.addExecutable(.{
-        .name = "day01",
-        .root_source_file = .{ .path = "src/day01.zig" },
-        .target = target,
-        .optimize = optimize,
-    });
-    b.installArtifact(exeDay01);
-
-    const exeDay02 = b.addExecutable(.{
-        .name = "day02",
-        .root_source_file = .{ .path = "src/day02.zig" },
-        .target = target,
-        .optimize = optimize,
-    });
-    b.installArtifact(exeDay02);
-
-    const exeDay03 = b.addExecutable(.{
-        .name = "day03",
-        .root_source_file = .{ .path = "src/day03.zig" },
-        .target = target,
-        .optimize = optimize,
-    });
-    b.installArtifact(exeDay03);
-
-    const exeDay04 = b.addExecutable(.{
-        .name = "day04",
-        .root_source_file = .{ .path = "src/day04.zig" },
-        .target = target,
-        .optimize = optimize,
-    });
-    b.installArtifact(exeDay04);
-
-    const exeDay05 = b.addExecutable(.{
-        .name = "day05",
-        .root_source_file = .{ .path = "src/day05.zig" },
-        .target = target,
-        .optimize = optimize,
-    });
-    b.installArtifact(exeDay05);
+    var buffer_filename = [_]u8{0} ** 20;
+    const days = [_][]const u8{ "day01", "day02", "day03", "day04", "day05", "day06" };
+    for (days) |day| {
+        var filename = std.fmt.bufPrint(&buffer_filename, "src/{s}.zig", .{day}) catch continue;
+        const exe = b.addExecutable(.{
+            .name = day,
+            .root_source_file = .{ .path = filename },
+            .target = target,
+            .optimize = optimize,
+        });
+        b.installArtifact(exe);
+    }
 }
