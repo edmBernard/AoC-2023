@@ -4,6 +4,10 @@ pub const std_options = struct {
     pub const log_level = .info;
 };
 
+pub fn sortPair(_: void, a: [2]u64, b: [2]u64) bool {
+    return a[0] < b[0];
+}
+
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
@@ -36,7 +40,7 @@ pub fn main() !void {
         // parse seed
         var seeds_p1 = std.ArrayList(u64).init(allocator);
         var seeds_mask_p1 = std.ArrayList(bool).init(allocator);
-        var seeds_p2 = std.ArrayList(u64).init(allocator);
+        var seeds_p2 = std.ArrayList([2]u64).init(allocator);
         var seeds_mask_p2 = std.ArrayList(bool).init(allocator);
         {
             var first_line = it.next().?;
@@ -54,10 +58,8 @@ pub fn main() !void {
             var seeds_p1_it = std.mem.window(u64, seeds_p1.items, 2, 2);
             while (seeds_p1_it.next()) |range| {
                 // we use the parsing of the seed from part1 to create seeds for part2
-                for (range[0]..range[0] + range[1] + 1) |seed| {
-                    try seeds_p2.append(seed);
-                    try seeds_mask_p2.append(false);
-                }
+                try seeds_p2.append([_]u64{ range[0], range[0] + range[1] - 1 });
+                try seeds_mask_p2.append(false);
             }
         }
 
@@ -84,7 +86,6 @@ pub fn main() !void {
                 ranges[idx] = value;
                 idx += 1;
             }
-
             // part1
             for (seeds_p1.items, seeds_mask_p1.items) |*seed, *mask| {
                 if (!mask.* and seed.* >= ranges[1] and seed.* <= ranges[1] + ranges[2]) {
@@ -93,20 +94,93 @@ pub fn main() !void {
                 }
             }
             // part2
-            for (seeds_p2.items, seeds_mask_p2.items) |*seed, *mask| {
-                if (!mask.* and seed.* >= ranges[1] and seed.* <= ranges[1] + ranges[2]) {
-                    seed.* = seed.* - ranges[1] + ranges[0];
+            const rsource_min = ranges[1];
+            const rsource_max = ranges[1] + ranges[2] - 1;
+            const rdest_min = ranges[0];
+            // we don't want pointer to be invalidated during append
+            // at maximum each range is splitted in 3
+            try seeds_p2.ensureUnusedCapacity(seeds_p2.items.len * 3);
+            try seeds_mask_p2.ensureUnusedCapacity(seeds_p2.items.len * 3);
+            for (seeds_p2.items, seeds_mask_p2.items) |*seed_range, *mask| {
+                if (mask.*) {
+                    continue;
+                }
+                var s_min = &seed_range[0];
+                var s_max = &seed_range[1];
+                // seed range completly outside of range
+                if (s_max.* < rsource_min or s_min.* > rsource_max)
+                    continue;
+
+                // seed range completly inside of range
+                if (s_min.* >= rsource_min and s_max.* <= rsource_max) {
+                    s_min.* = s_min.* - rsource_min + rdest_min;
+                    s_max.* = s_max.* - rsource_min + rdest_min;
                     mask.* = true;
+                    continue;
+                }
+
+                // range completly inside seed range
+                if (s_min.* <= rsource_min and s_max.* >= rsource_max) {
+                    // low part
+                    if (s_min.* != rsource_min) {
+                        var low_min = s_min.*;
+                        var low_max = rsource_min - 1;
+                        seeds_p2.appendAssumeCapacity([_]u64{ low_min, low_max });
+                        seeds_mask_p2.appendAssumeCapacity(false);
+                    }
+                    // high part
+                    if (s_max.* != rsource_max) {
+                        var high_min = rsource_max + 1;
+                        var high_max = s_max.*;
+                        seeds_p2.appendAssumeCapacity([_]u64{ high_min, high_max });
+                        seeds_mask_p2.appendAssumeCapacity(false);
+                    }
+                    // middle part
+                    s_min.* = rdest_min;
+                    s_max.* = rdest_min + rsource_max - rsource_min;
+                    mask.* = true;
+                    continue;
+                }
+
+                // range half high
+                if (s_min.* < rsource_min and s_max.* <= rsource_max) {
+                    // low part
+                    var low_min = s_min.*;
+                    var low_max = rsource_min - 1;
+                    seeds_p2.appendAssumeCapacity([_]u64{ low_min, low_max });
+                    seeds_mask_p2.appendAssumeCapacity(false);
+                    // middle part
+                    s_min.* = rdest_min;
+                    s_max.* = rdest_min + s_max.* - rsource_min - 1;
+                    mask.* = true;
+                    continue;
+                }
+
+                // range half low
+                if (s_min.* <= rsource_min and s_max.* < rsource_max) {
+                    // high part
+                    var high_min = rsource_max + 1;
+                    var high_max = s_max.*;
+                    seeds_p2.appendAssumeCapacity([_]u64{ high_min, high_max });
+                    seeds_mask_p2.appendAssumeCapacity(false);
+                    // middle part
+                    s_min.* = rdest_min + s_min.* - rsource_min - 1;
+                    s_max.* = rdest_min + rsource_max - rsource_min - 1;
+                    mask.* = true;
+                    continue;
                 }
             }
             std.debug.print("interation : {s}\n", .{line});
+            for (seeds_p2.items) |seed_range| {
+                std.debug.print(" seed range [{d}, {d}]\n", .{ seed_range[0], seed_range[1] });
+            }
         }
 
         std.sort.pdq(u64, seeds_p1.items, {}, std.sort.asc(u64));
-        std.sort.pdq(u64, seeds_p2.items, {}, std.sort.asc(u64));
+        std.sort.pdq([2]u64, seeds_p2.items, {}, sortPair);
 
         part1 = seeds_p1.items[0];
-        part2 = seeds_p2.items[0];
+        part2 = seeds_p2.items[0][0];
     }
     var tac: i64 = std.time.microTimestamp() - tic;
     std.log.info("Zig  day01 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
