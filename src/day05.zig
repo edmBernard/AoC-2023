@@ -24,7 +24,7 @@ pub fn main() !void {
     var tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
-    const nrun = 10000;
+    const nrun = 1;
     for (0..nrun) |_| {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
@@ -33,72 +33,80 @@ pub fn main() !void {
         defer allocator.free(read_buf);
         var it = std.mem.splitAny(u8, read_buf, "\n");
 
-        var acc_part1: u64 = 0;
-        var acc_part2: u64 = 0;
+        // parse seed
+        var seeds_p1 = std.ArrayList(u64).init(allocator);
+        var seeds_mask_p1 = std.ArrayList(bool).init(allocator);
+        var seeds_p2 = std.ArrayList(u64).init(allocator);
+        var seeds_mask_p2 = std.ArrayList(bool).init(allocator);
+        {
+            var first_line = it.next().?;
+            const column_idx = std.mem.indexOf(u8, first_line, ":");
 
-        while (it.next()) |line| {
-            // part1
-            {
-                var firstDigit: u32 = 0;
-                var lastDigit: u32 = 0;
-                forward: for (0..line.len) |idx| {
-                    var digit = line[idx] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        firstDigit = digit;
-                        break :forward;
-                    }
-                }
-                backward: for (0..line.len) |idx| {
-                    var digit = line[line.len - idx - 1] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        lastDigit = digit;
-                        break :backward;
-                    }
-                }
-                acc_part1 += firstDigit * 10 + lastDigit;
+            var seeds_it = std.mem.tokenizeScalar(u8, first_line[column_idx.? + 1 ..], ' ');
+            while (seeds_it.next()) |str| {
+                const seed = try std.fmt.parseUnsigned(u32, str, 10);
+                try seeds_p1.append(seed);
+                try seeds_mask_p1.append(false);
             }
-            // part2
-            {
-                var digits_string = [_][]const u8{ "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
-                var firstDigit: u64 = 0;
-                var lastDigit: u64 = 0;
-                // We use this method because word can overlap like "nineight"
-                forward: for (0..line.len) |idx| {
-                    var digit = line[idx] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        firstDigit = digit;
-                        break :forward;
-                    } else {
-                        var slice = line[idx..];
-                        for (digits_string, 1..) |str, value| {
-                            if (std.mem.startsWith(u8, slice, str)) {
-                                firstDigit = value;
-                                break :forward;
-                            }
-                        }
-                    }
+            // Completly brain dead solution I create as many seed there is.
+            // A better solution should probably be to keep them in the form of range and intersect range
+            // btw, It seems it don't work
+            var seeds_p1_it = std.mem.window(u64, seeds_p1.items, 2, 2);
+            while (seeds_p1_it.next()) |range| {
+                // we use the parsing of the seed from part1 to create seeds for part2
+                for (range[0]..range[0] + range[1] + 1) |seed| {
+                    try seeds_p2.append(seed);
+                    try seeds_mask_p2.append(false);
                 }
-                backward: for (0..line.len) |idx| {
-                    var ridx = line.len - idx - 1;
-                    var digit = line[ridx] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        lastDigit = digit;
-                        break :backward;
-                    } else {
-                        var slice = line[ridx..];
-                        for (digits_string, 1..) |str, value| {
-                            if (std.mem.startsWith(u8, slice, str)) {
-                                lastDigit = value;
-                                break :backward;
-                            }
-                        }
-                    }
-                }
-                acc_part2 += firstDigit * 10 + lastDigit;
             }
         }
-        part1 = acc_part1;
-        part2 = acc_part2;
+
+        while (it.next()) |line| {
+            if (line.len == 0)
+                continue;
+            const column_idx = std.mem.indexOf(u8, line, ":");
+            if (column_idx != null) {
+                // reset mask between group
+                for (seeds_mask_p1.items) |*mask| {
+                    mask.* = false;
+                }
+                for (seeds_mask_p2.items) |*mask| {
+                    mask.* = false;
+                }
+                continue;
+            }
+            // create map
+            var range_it = std.mem.tokenizeScalar(u8, line, ' ');
+            var ranges = [_]usize{0} ** 3;
+            var idx: usize = 0; // there is probably a better to do that indexing in the loop
+            while (range_it.next()) |str| {
+                const value = try std.fmt.parseUnsigned(u32, str, 10);
+                ranges[idx] = value;
+                idx += 1;
+            }
+
+            // part1
+            for (seeds_p1.items, seeds_mask_p1.items) |*seed, *mask| {
+                if (!mask.* and seed.* >= ranges[1] and seed.* <= ranges[1] + ranges[2]) {
+                    seed.* = seed.* - ranges[1] + ranges[0];
+                    mask.* = true;
+                }
+            }
+            // part2
+            for (seeds_p2.items, seeds_mask_p2.items) |*seed, *mask| {
+                if (!mask.* and seed.* >= ranges[1] and seed.* <= ranges[1] + ranges[2]) {
+                    seed.* = seed.* - ranges[1] + ranges[0];
+                    mask.* = true;
+                }
+            }
+            std.debug.print("interation : {s}\n", .{line});
+        }
+
+        std.sort.pdq(u64, seeds_p1.items, {}, std.sort.asc(u64));
+        std.sort.pdq(u64, seeds_p2.items, {}, std.sort.asc(u64));
+
+        part1 = seeds_p1.items[0];
+        part2 = seeds_p2.items[0];
     }
     var tac: i64 = std.time.microTimestamp() - tic;
     std.log.info("Zig  day01 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
