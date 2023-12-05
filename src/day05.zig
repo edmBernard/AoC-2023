@@ -28,7 +28,7 @@ pub fn main() !void {
     var tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
-    const nrun = 1;
+    const nrun = 10000;
     for (0..nrun) |_| {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
@@ -39,9 +39,12 @@ pub fn main() !void {
 
         // parse seed
         var seeds_p1 = std.ArrayList(u64).init(allocator);
-        var seeds_mask_p1 = std.ArrayList(bool).init(allocator);
         var seeds_p2 = std.ArrayList([2]u64).init(allocator);
+        // to avoid processing just transformed range during mapping, I use a mask to mark range already processed
+        var seeds_mask_p1 = std.ArrayList(bool).init(allocator);
         var seeds_mask_p2 = std.ArrayList(bool).init(allocator);
+
+        // Parse seeds
         {
             var first_line = it.next().?;
             const column_idx = std.mem.indexOf(u8, first_line, ":");
@@ -52,9 +55,6 @@ pub fn main() !void {
                 try seeds_p1.append(seed);
                 try seeds_mask_p1.append(false);
             }
-            // Completly brain dead solution I create as many seed there is.
-            // A better solution should probably be to keep them in the form of range and intersect range
-            // btw, It seems it don't work
             var seeds_p1_it = std.mem.window(u64, seeds_p1.items, 2, 2);
             while (seeds_p1_it.next()) |range| {
                 // we use the parsing of the seed from part1 to create seeds for part2
@@ -68,7 +68,7 @@ pub fn main() !void {
                 continue;
             const column_idx = std.mem.indexOf(u8, line, ":");
             if (column_idx != null) {
-                // reset mask between group
+                // reset mask between mapping group
                 for (seeds_mask_p1.items) |*mask| {
                     mask.* = false;
                 }
@@ -87,6 +87,7 @@ pub fn main() !void {
                 idx += 1;
             }
             // part1
+            // method: we propagate each seed
             for (seeds_p1.items, seeds_mask_p1.items) |*seed, *mask| {
                 if (!mask.* and seed.* >= ranges[1] and seed.* <= ranges[1] + ranges[2]) {
                     seed.* = seed.* - ranges[1] + ranges[0];
@@ -94,24 +95,30 @@ pub fn main() !void {
                 }
             }
             // part2
+            // method: we propagate directly the range
+            // so we should compute intersection between range of seed and range of mapping
+            // I made so many mistake on range split so I write each possible case manually
             const rsource_min = ranges[1];
             const rsource_max = ranges[1] + ranges[2] - 1;
             const rdest_min = ranges[0];
             // we don't want pointer to be invalidated during append
-            // at maximum each range is splitted in 3
-            try seeds_p2.ensureUnusedCapacity(seeds_p2.items.len * 3);
-            try seeds_mask_p2.ensureUnusedCapacity(seeds_p2.items.len * 3);
+            // each range is splitted at most in 3 so we reserve 2 more time the same length
+            try seeds_p2.ensureUnusedCapacity(seeds_p2.items.len * 2);
+            try seeds_mask_p2.ensureUnusedCapacity(seeds_p2.items.len * 2);
             for (seeds_p2.items, seeds_mask_p2.items) |*seed_range, *mask| {
+                // if the seed-range is already processed we skip
                 if (mask.*) {
                     continue;
                 }
                 var s_min = &seed_range[0];
                 var s_max = &seed_range[1];
-                // seed range completly outside of range
-                if (s_max.* < rsource_min or s_min.* > rsource_max)
-                    continue;
 
-                // seed range completly inside of range
+                // seed-range completly outside of mapping-range
+                if (s_max.* < rsource_min or s_min.* > rsource_max) {
+                    continue;
+                }
+
+                // seed-range completly inside of mapping-range
                 if (s_min.* >= rsource_min and s_max.* <= rsource_max) {
                     s_min.* = s_min.* - rsource_min + rdest_min;
                     s_max.* = s_max.* - rsource_min + rdest_min;
@@ -119,7 +126,7 @@ pub fn main() !void {
                     continue;
                 }
 
-                // range completly inside seed range
+                // mapping-range completly inside seed-range
                 if (s_min.* <= rsource_min and s_max.* >= rsource_max) {
                     // low part
                     if (s_min.* != rsource_min) {
@@ -142,7 +149,7 @@ pub fn main() !void {
                     continue;
                 }
 
-                // range half high
+                // mapping-range half high of seed-range
                 if (s_min.* < rsource_min and s_max.* <= rsource_max) {
                     // low part
                     var low_min = s_min.*;
@@ -151,28 +158,24 @@ pub fn main() !void {
                     seeds_mask_p2.appendAssumeCapacity(false);
                     // middle part
                     s_min.* = rdest_min;
-                    s_max.* = rdest_min + s_max.* - rsource_min - 1;
+                    s_max.* = rdest_min + s_max.* - rsource_min;
                     mask.* = true;
                     continue;
                 }
 
-                // range half low
-                if (s_min.* <= rsource_min and s_max.* < rsource_max) {
+                // mapping-range half low of seed-range
+                if (s_min.* >= rsource_min and s_max.* > rsource_max) {
                     // high part
                     var high_min = rsource_max + 1;
                     var high_max = s_max.*;
                     seeds_p2.appendAssumeCapacity([_]u64{ high_min, high_max });
                     seeds_mask_p2.appendAssumeCapacity(false);
                     // middle part
-                    s_min.* = rdest_min + s_min.* - rsource_min - 1;
-                    s_max.* = rdest_min + rsource_max - rsource_min - 1;
+                    s_min.* = rdest_min + s_min.* - rsource_min;
+                    s_max.* = rdest_min + rsource_max - rsource_min;
                     mask.* = true;
                     continue;
                 }
-            }
-            std.debug.print("interation : {s}\n", .{line});
-            for (seeds_p2.items) |seed_range| {
-                std.debug.print(" seed range [{d}, {d}]\n", .{ seed_range[0], seed_range[1] });
             }
         }
 
@@ -183,5 +186,5 @@ pub fn main() !void {
         part2 = seeds_p2.items[0][0];
     }
     var tac: i64 = std.time.microTimestamp() - tic;
-    std.log.info("Zig  day01 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
+    std.log.info("Zig  day05 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
 }
