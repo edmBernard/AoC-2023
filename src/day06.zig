@@ -24,7 +24,7 @@ pub fn main() !void {
     var tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
-    const nrun = 1000;
+    const nrun = 10000;
     for (0..nrun) |_| {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
@@ -79,13 +79,11 @@ pub fn main() !void {
         }
         // part2
         {
-            var number_of_way: u64 = 0;
-            for (0..total_time_part2) |t| {
-                var distance = (total_time_part2 - t) * t;
-                if (distance > total_distance_part2)
-                    number_of_way += 1;
-            }
-            acc_part2 = number_of_way;
+            // Solve the quadratic equation
+            var delta: f64 = @floatFromInt(total_time_part2 * total_time_part2 - 4 * total_distance_part2);
+            var x1: u64 = @intFromFloat(@floor((@as(f64, @floatFromInt(total_distance_part2)) - std.math.sqrt(delta)) / 2));
+            var x2: u64 = @intFromFloat(@floor((@as(f64, @floatFromInt(total_distance_part2)) + std.math.sqrt(delta)) / 2));
+            acc_part2 = x2 - x1;
         }
         part1 = acc_part1;
         part2 = acc_part2;
