@@ -24,7 +24,7 @@ pub fn main() !void {
     var tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
-    const nrun = 10000;
+    const nrun = 1000;
     for (0..nrun) |_| {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
@@ -33,73 +33,63 @@ pub fn main() !void {
         defer allocator.free(read_buf);
         var it = std.mem.splitAny(u8, read_buf, "\n");
 
-        var acc_part1: u64 = 0;
+        var acc_part1: u64 = 1;
         var acc_part2: u64 = 0;
 
-        while (it.next()) |line| {
-            // part1
-            {
-                var firstDigit: u32 = 0;
-                var lastDigit: u32 = 0;
-                forward: for (0..line.len) |idx| {
-                    var digit = line[idx] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        firstDigit = digit;
-                        break :forward;
-                    }
-                }
-                backward: for (0..line.len) |idx| {
-                    var digit = line[line.len - idx - 1] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        lastDigit = digit;
-                        break :backward;
-                    }
-                }
-                acc_part1 += firstDigit * 10 + lastDigit;
+        // Parse time
+        var times = std.ArrayList(u64).init(allocator);
+        var total_time_part2: u64 = 0;
+        defer times.deinit();
+        {
+            var first_line = it.next().?;
+            const column_idx = std.mem.indexOf(u8, first_line, ":");
+
+            var times_it = std.mem.tokenizeScalar(u8, first_line[column_idx.? + 1 ..], ' ');
+            while (times_it.next()) |str| {
+                const time = try std.fmt.parseUnsigned(u32, str, 10);
+                try times.append(time);
+                total_time_part2 = time + total_time_part2 * try std.math.powi(u64, 10, str.len);
             }
-            // part2
-            {
-                var digits_string = [_][]const u8{ "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
-                var firstDigit: u64 = 0;
-                var lastDigit: u64 = 0;
-                // We use this method because word can overlap like "nineight"
-                forward: for (0..line.len) |idx| {
-                    var digit = line[idx] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        firstDigit = digit;
-                        break :forward;
-                    } else {
-                        var slice = line[idx..];
-                        for (digits_string, 1..) |str, value| {
-                            if (std.mem.startsWith(u8, slice, str)) {
-                                firstDigit = value;
-                                break :forward;
-                            }
-                        }
-                    }
-                }
-                backward: for (0..line.len) |idx| {
-                    var ridx = line.len - idx - 1;
-                    var digit = line[ridx] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        lastDigit = digit;
-                        break :backward;
-                    } else {
-                        var slice = line[ridx..];
-                        for (digits_string, 1..) |str, value| {
-                            if (std.mem.startsWith(u8, slice, str)) {
-                                lastDigit = value;
-                                break :backward;
-                            }
-                        }
-                    }
-                }
-                acc_part2 += firstDigit * 10 + lastDigit;
+        }
+        // Parse distance
+        var distances = std.ArrayList(u64).init(allocator);
+        var total_distance_part2: u64 = 0;
+        defer distances.deinit();
+        {
+            var second_line = it.next().?;
+            const column_idx = std.mem.indexOf(u8, second_line, ":");
+
+            var distances_it = std.mem.tokenizeScalar(u8, second_line[column_idx.? + 1 ..], ' ');
+            while (distances_it.next()) |str| {
+                const distance = try std.fmt.parseUnsigned(u32, str, 10);
+                try distances.append(distance);
+                total_distance_part2 = distance + total_distance_part2 * try std.math.powi(u64, 10, str.len);
             }
+        }
+
+        // part1
+        for (distances.items, times.items) |record_distance, total_time| {
+            var number_of_way: u64 = 0;
+            for (0..total_time) |t| {
+                var distance = (total_time - t) * t;
+                if (distance > record_distance)
+                    number_of_way += 1;
+            }
+            acc_part1 *= number_of_way;
+        }
+        // part2
+        {
+            var number_of_way: u64 = 0;
+            for (0..total_time_part2) |t| {
+                var distance = (total_time_part2 - t) * t;
+                if (distance > total_distance_part2)
+                    number_of_way += 1;
+            }
+            acc_part2 = number_of_way;
         }
         part1 = acc_part1;
         part2 = acc_part2;
     }
     var tac: i64 = std.time.microTimestamp() - tic;
-    std.log.info("Zig  day01 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
+    std.log.info("Zig  day06 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
 }
