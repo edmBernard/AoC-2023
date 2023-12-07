@@ -30,6 +30,7 @@ cargo build --release
 | Day04 <sup>[puzzle](https://adventofcode.com/2023/day/4) | [Zig](src/day04.zig) | Scratch card |  |
 | Day05 <sup>[puzzle](https://adventofcode.com/2023/day/5) | [Zig](src/day05.zig) | Seeds planting | directly work on range |
 | Day06 <sup>[puzzle](https://adventofcode.com/2023/day/6) | [Zig](src/day06.zig) | Boat race |  |
+| Day07 <sup>[puzzle](https://adventofcode.com/2023/day/7) | [Zig](src/day07.zig) | Poker |  |
 
 
 ## Some Timing :
@@ -42,6 +43,7 @@ Zig  day03 in               117.06 us : part1=527364     part2=79026871
 Zig  day04 in                82.68 us : part1=21558      part2=10425665
 Zig  day05 in                50.07 us : part1=600279879  part2=20191102
 Zig  day06 in                 8.45 us : part1=114400     part2=21039729
+Zig  day07 in              1964.08 us : part1=250946742  part2=251824095
 
 In Rust
 Rust day01 in                66.89 us : part1=54304      part2=54418
