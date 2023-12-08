@@ -4,6 +4,22 @@ pub const std_options = struct {
     pub const log_level = .info;
 };
 
+fn gcd(comptime T: type, a: T, b: T) T {
+    var na = a;
+    var nb = b;
+    while (nb != 0) {
+        var temp = na;
+        na = nb;
+        nb = @mod(temp, nb);
+    }
+    return na;
+}
+
+fn lcm(comptime T: type, a: T, b: T) T {
+    var c = gcd(T, a, b);
+    return if (c == 0) 0 else a / c * b;
+}
+
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
@@ -24,7 +40,7 @@ pub fn main() !void {
     var tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
-    const nrun = 1;
+    const nrun = 10000;
     for (0..nrun) |_| {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
@@ -84,35 +100,52 @@ pub fn main() !void {
             }
         }
         // part 2
-        // Don't seem to work for the moment.
-        var step_count_part2: u64 = 0;
+        var result_part2: u64 = 1;
         {
-            var instruction_index: usize = 0;
-            var all_node_are_ending = false;
-            while (!all_node_are_ending) {
-                // std.debug.print("Nodes : ", .{});
-                // for (current_node_part2.items) |node| {
-                //     std.debug.print("{s} ", .{node});
-                // }
-                // std.debug.print("\n", .{});
+            // the input puzzle have the properties :
+            //  - cycle are independent (one input node match exactly one output node
+            //  - the cycle have the same length than the distance from start to end
+            // the solution is the least common multiple between cycle length
 
-                all_node_are_ending = true;
-                for (current_node_part2.items) |*node| {
-                    // std.debug.print("current node {s}\n", .{node.*});
-                    node.* = switch (instructions.items[instruction_index]) {
-                        InstructionTag.left => graph.get(node.*).?[0],
-                        InstructionTag.right => graph.get(node.*).?[1],
+            var cycles_length = std.ArrayList(u64).init(allocator);
+            for (current_node_part2.items) |node| {
+
+                // Go to end node
+                var current_node = node;
+                var offset: u64 = 0;
+                var instruction_index: usize = 0;
+                while (current_node[2] != 'Z') {
+                    current_node = switch (instructions.items[instruction_index]) {
+                        InstructionTag.left => graph.get(current_node).?[0],
+                        InstructionTag.right => graph.get(current_node).?[1],
                     };
-                    all_node_are_ending = all_node_are_ending and node.*[2] == 'Z';
+                    instruction_index = if (instruction_index == instructions.items.len - 1) 0 else instruction_index + 1;
+                    offset += 1;
                 }
-                instruction_index = if (instruction_index == instructions.items.len - 1) 0 else instruction_index + 1;
-                step_count_part2 += 1;
-                // if (@mod(step_count_part2, 100000) == 0)
-                //     std.debug.print("step = {d}\n", .{step_count_part2});
+                var instruction_index_loop = instruction_index;
+                // Compute the cycle length
+                var cycle_len: u64 = 0;
+                while (true) {
+                    current_node = switch (instructions.items[instruction_index]) {
+                        InstructionTag.left => graph.get(current_node).?[0],
+                        InstructionTag.right => graph.get(current_node).?[1],
+                    };
+                    instruction_index = if (instruction_index == instructions.items.len - 1) 0 else instruction_index + 1;
+                    cycle_len += 1;
+                    if (current_node[2] == 'Z' and instruction_index == instruction_index_loop) break;
+                }
+                if (cycle_len != offset) {
+                    std.log.err("Cycle don't have correct property for my solution", .{});
+                }
+                try cycles_length.append(cycle_len);
+            }
+            // Compute LCM
+            for (cycles_length.items) |elem| {
+                result_part2 = lcm(u64, result_part2, elem);
             }
         }
         part1 = step_count_part1;
-        part2 = step_count_part2;
+        part2 = result_part2;
     }
     var tac: i64 = std.time.microTimestamp() - tic;
     std.log.info("Zig  day08 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
