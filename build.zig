@@ -13,7 +13,7 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseFast });
 
     var buffer_filename = [_]u8{0} ** 20;
-    const days = [_][]const u8{ "day01", "day02", "day03", "day04", "day05", "day06", "day07", "day08", "day11" };
+    const days = [_][]const u8{ "day01", "day02", "day03", "day04", "day05", "day06", "day07", "day08", "day11", "day12" };
     for (days) |day| {
         var filename = std.fmt.bufPrint(&buffer_filename, "src/{s}.zig", .{day}) catch continue;
         const exe = b.addExecutable(.{
