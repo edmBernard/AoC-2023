@@ -48,7 +48,7 @@ Zig  day06 in                 8.45 us : part1=114400     part2=21039729
 Zig  day07 in              1964.08 us : part1=250946742  part2=251824095
 Zig  day08 in              3258.56 us : part1=22357      part2=10371555451871
 ...
-Zig  day11 in               156.32 us : part1=9599070    part2=842645913794
+Zig  day11 in               148.00 us : part1=9599070    part2=842645913794
 
 In Rust
 Rust day01 in                66.89 us : part1=54304      part2=54418

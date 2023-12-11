@@ -67,18 +67,42 @@ pub fn main() !void {
             row += 1;
         }
         galaxy_position_part2 = try galaxy_position_part1.clone();
+
+        // compute a lut to convert coord from not-expanded to expanded
+        // the speed-up of using of a precomputed lut is around 10%
+        var lutx_part1 = try std.ArrayList(i64).initCapacity(allocator, expanded_column.items.len);
+        var lutx_part2 = try std.ArrayList(i64).initCapacity(allocator, expanded_column.items.len);
+        {
+            var accumulator_part1: i64 = 0;
+            var accumulator_part2: i64 = 0;
+            for (0..expanded_column.items.len) |idx| {
+                if (expanded_column.items[idx]) {
+                    accumulator_part1 += 2 - 1;
+                    accumulator_part2 += 1000000 - 1;
+                }
+                lutx_part1.appendAssumeCapacity(@as(i64, @intCast(idx)) + accumulator_part1);
+                lutx_part2.appendAssumeCapacity(@as(i64, @intCast(idx)) + accumulator_part2);
+            }
+        }
+        var luty_part1 = try std.ArrayList(i64).initCapacity(allocator, expanded_row.items.len);
+        var luty_part2 = try std.ArrayList(i64).initCapacity(allocator, expanded_row.items.len);
+        {
+            var accumulator_part1: i64 = 0;
+            var accumulator_part2: i64 = 0;
+            for (0..expanded_row.items.len) |idx| {
+                if (expanded_row.items[idx]) {
+                    accumulator_part1 += 2 - 1;
+                    accumulator_part2 += 1000000 - 1;
+                }
+                luty_part1.appendAssumeCapacity(@as(i64, @intCast(idx)) + accumulator_part1);
+                luty_part2.appendAssumeCapacity(@as(i64, @intCast(idx)) + accumulator_part2);
+            }
+        }
+
         // part1
         for (galaxy_position_part1.items) |*galaxy| {
-            for (0..@intCast(galaxy.x)) |x| {
-                if (expanded_column.items[x]) {
-                    galaxy.x += 2 - 1;
-                }
-            }
-            for (0..@intCast(galaxy.y)) |y| {
-                if (expanded_row.items[y]) {
-                    galaxy.y += 2 - 1;
-                }
-            }
+            galaxy.x = lutx_part1.items[@intCast(galaxy.x)];
+            galaxy.y = luty_part1.items[@intCast(galaxy.y)];
         }
         for (galaxy_position_part1.items, 0..) |galaxy1, idx| {
             for (galaxy_position_part1.items[idx + 1 ..]) |galaxy2| {
@@ -87,16 +111,8 @@ pub fn main() !void {
         }
         // part2
         for (galaxy_position_part2.items) |*galaxy| {
-            for (0..@intCast(galaxy.x)) |x| {
-                if (expanded_column.items[x]) {
-                    galaxy.x += 1000000 - 1;
-                }
-            }
-            for (0..@intCast(galaxy.y)) |y| {
-                if (expanded_row.items[y]) {
-                    galaxy.y += 1000000 - 1;
-                }
-            }
+            galaxy.x = lutx_part2.items[@intCast(galaxy.x)];
+            galaxy.y = luty_part2.items[@intCast(galaxy.y)];
         }
         for (galaxy_position_part2.items, 0..) |galaxy1, idx| {
             for (galaxy_position_part2.items[idx + 1 ..]) |galaxy2| {
