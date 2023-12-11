@@ -32,7 +32,7 @@ cargo build --release
 | Day06 <sup>[puzzle](https://adventofcode.com/2023/day/6) | [Zig](src/day06.zig) | Boat race |  |
 | Day07 <sup>[puzzle](https://adventofcode.com/2023/day/7) | [Zig](src/day07.zig) | Poker |  |
 | Day08 <sup>[puzzle](https://adventofcode.com/2023/day/8) | [Zig](src/day08.zig) | Graph | inputs are particular enough to use LCM |
-| Day11 <sup>[puzzle](https://adventofcode.com/2023/day/11) | [Zig](src/day11.zig) | Galaxy and universe expansion |  |
+| Day11 <sup>[puzzle](https://adventofcode.com/2023/day/11) | [Zig](src/day11.zig) | Galaxy and universe expansion | work directly on galaxy coordinate |
 
 
 ## Some Timing :
@@ -47,7 +47,8 @@ Zig  day05 in                50.07 us : part1=600279879  part2=20191102
 Zig  day06 in                 8.45 us : part1=114400     part2=21039729
 Zig  day07 in              1964.08 us : part1=250946742  part2=251824095
 Zig  day08 in              3258.56 us : part1=22357      part2=10371555451871
-Zig  day11 in              5604.34 us : part1=9599070    part2=842645913794
+...
+Zig  day11 in               156.32 us : part1=9599070    part2=842645913794
 
 In Rust
 Rust day01 in                66.89 us : part1=54304      part2=54418

@@ -37,14 +37,14 @@ pub fn main() !void {
         var acc_part2: u64 = 0;
         const Coord = struct { x: i64, y: i64 };
 
-        var galaxy_position = std.ArrayList(Coord).init(allocator);
-        defer galaxy_position.deinit();
+        var galaxy_position_part1 = std.ArrayList(Coord).init(allocator);
+        defer galaxy_position_part1.deinit();
+        var galaxy_position_part2 = std.ArrayList(Coord).init(allocator);
+        defer galaxy_position_part2.deinit();
         var expanded_column = std.ArrayList(bool).init(allocator);
         defer expanded_column.deinit();
         var expanded_row = std.ArrayList(bool).init(allocator);
         defer expanded_row.deinit();
-        var image = std.ArrayList(bool).init(allocator);
-        defer image.deinit();
         var line_size: usize = 0;
         var row: usize = 0;
         var is_first_line = true;
@@ -57,42 +57,57 @@ pub fn main() !void {
             }
             var has_galaxy = false;
             for (line, 0..) |c, col| {
-                switch (c) {
-                    '.' => try image.append(false),
-                    '#' => {
-                        try image.append(true);
-                        try galaxy_position.append(.{ .x = @intCast(col), .y = @intCast(row) });
-                        has_galaxy = true;
-                        expanded_column.items[col] = false;
-                    },
-                    else => unreachable,
+                if (c == '#') {
+                    try galaxy_position_part1.append(.{ .x = @intCast(col), .y = @intCast(row) });
+                    has_galaxy = true;
+                    expanded_column.items[col] = false;
                 }
             }
             try expanded_row.append(!has_galaxy);
             row += 1;
         }
-
-        for (galaxy_position.items, 0..) |galaxy1, idx| {
-            for (galaxy_position.items[idx..]) |galaxy2| {
-                acc_part1 += std.math.absCast(galaxy1.x - galaxy2.x) + std.math.absCast(galaxy1.y - galaxy2.y);
-                acc_part2 += std.math.absCast(galaxy1.x - galaxy2.x) + std.math.absCast(galaxy1.y - galaxy2.y);
-                for (@intCast(@min(galaxy1.x, galaxy2.x))..@intCast(@max(galaxy1.x, galaxy2.x))) |x| {
-                    if (expanded_column.items[x]) {
-                        acc_part1 += 1;
-                        acc_part2 += 1000000 - 1;
-                    }
+        galaxy_position_part2 = try galaxy_position_part1.clone();
+        // part1
+        for (galaxy_position_part1.items) |*galaxy| {
+            for (0..@intCast(galaxy.x)) |x| {
+                if (expanded_column.items[x]) {
+                    galaxy.x += 2 - 1;
                 }
-                for (@intCast(@min(galaxy1.y, galaxy2.y))..@intCast(@max(galaxy1.y, galaxy2.y))) |y| {
-                    if (expanded_row.items[y]) {
-                        acc_part1 += 1;
-                        acc_part2 += 1000000 - 1;
-                    }
+            }
+            for (0..@intCast(galaxy.y)) |y| {
+                if (expanded_row.items[y]) {
+                    galaxy.y += 2 - 1;
                 }
             }
         }
+        for (galaxy_position_part1.items, 0..) |galaxy1, idx| {
+            for (galaxy_position_part1.items[idx + 1 ..]) |galaxy2| {
+                acc_part1 += std.math.absCast(galaxy1.x - galaxy2.x) + std.math.absCast(galaxy1.y - galaxy2.y);
+            }
+        }
+        // part2
+        for (galaxy_position_part2.items) |*galaxy| {
+            for (0..@intCast(galaxy.x)) |x| {
+                if (expanded_column.items[x]) {
+                    galaxy.x += 1000000 - 1;
+                }
+            }
+            for (0..@intCast(galaxy.y)) |y| {
+                if (expanded_row.items[y]) {
+                    galaxy.y += 1000000 - 1;
+                }
+            }
+        }
+        for (galaxy_position_part2.items, 0..) |galaxy1, idx| {
+            for (galaxy_position_part2.items[idx + 1 ..]) |galaxy2| {
+                acc_part2 += std.math.absCast(galaxy1.x - galaxy2.x) + std.math.absCast(galaxy1.y - galaxy2.y);
+            }
+        }
+
         part1 = acc_part1;
         part2 = acc_part2;
     }
-    var tac: i64 = std.time.microTimestamp() - tic;
+
+    var tac = std.time.microTimestamp() - tic;
     std.log.info("Zig  day11 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
 }
