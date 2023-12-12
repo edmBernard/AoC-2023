@@ -4,6 +4,14 @@ pub const std_options = struct {
     pub const log_level = .info;
 };
 
+fn sum(array: []u32) u64 {
+    var acc: u64 = 0;
+    for (array) |value| {
+        acc += value;
+    }
+    return acc;
+}
+
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
@@ -24,7 +32,7 @@ pub fn main() !void {
     var tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
-    const nrun = 10000;
+    const nrun = 1;
     for (0..nrun) |_| {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
@@ -37,69 +45,70 @@ pub fn main() !void {
         var acc_part2: u64 = 0;
 
         while (it.next()) |line| {
-            // part1
-            {
-                var firstDigit: u32 = 0;
-                var lastDigit: u32 = 0;
-                forward: for (0..line.len) |idx| {
-                    var digit = line[idx] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        firstDigit = digit;
-                        break :forward;
-                    }
+            if (line.len == 0)
+                continue;
+
+            var spring_damaged = std.ArrayList(bool).init(allocator);
+            var spring_mask = std.ArrayList(bool).init(allocator);
+            var spring_mask_usize: usize = 0;
+            var spring_damaged_usize: usize = 0;
+
+            var check_sum = std.ArrayList(u32).init(allocator);
+            defer check_sum.deinit();
+
+            var line_it = std.mem.tokenizeAny(u8, line, " ,");
+            var springs_str = line_it.next().?;
+            for (springs_str) |spring| {
+                spring_mask_usize <<= 1;
+                spring_damaged_usize <<= 1;
+
+                switch (spring) {
+                    '?' => {
+                        spring_mask_usize += 1;
+                        try spring_mask.append(false);
+                    },
+                    else => try spring_mask.append(true),
                 }
-                backward: for (0..line.len) |idx| {
-                    var digit = line[line.len - idx - 1] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        lastDigit = digit;
-                        break :backward;
-                    }
+                switch (spring) {
+                    '#' => {
+                        spring_damaged_usize += 1;
+                        try spring_damaged.append(true);
+                    },
+                    else => try spring_damaged.append(false),
                 }
-                acc_part1 += firstDigit * 10 + lastDigit;
             }
-            // part2
-            {
-                var digits_string = [_][]const u8{ "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
-                var firstDigit: u64 = 0;
-                var lastDigit: u64 = 0;
-                // We use this method because word can overlap like "nineight"
-                forward: for (0..line.len) |idx| {
-                    var digit = line[idx] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        firstDigit = digit;
-                        break :forward;
-                    } else {
-                        var slice = line[idx..];
-                        for (digits_string, 1..) |str, value| {
-                            if (std.mem.startsWith(u8, slice, str)) {
-                                firstDigit = value;
-                                break :forward;
-                            }
-                        }
-                    }
-                }
-                backward: for (0..line.len) |idx| {
-                    var ridx = line.len - idx - 1;
-                    var digit = line[ridx] - '0';
-                    if (digit >= 0 and digit < 10) {
-                        lastDigit = digit;
-                        break :backward;
-                    } else {
-                        var slice = line[ridx..];
-                        for (digits_string, 1..) |str, value| {
-                            if (std.mem.startsWith(u8, slice, str)) {
-                                lastDigit = value;
-                                break :backward;
-                            }
-                        }
-                    }
-                }
-                acc_part2 += firstDigit * 10 + lastDigit;
+            while (line_it.next()) |number| {
+                const value = try std.fmt.parseUnsigned(u32, number, 10);
+                try check_sum.append(value);
             }
+            var number_spring = sum(check_sum.items);
+            // std.debug.print("unknown = {b:0>10}\n", .{spring_mask_usize});
+            // std.debug.print("damaged = {b:0>10}\n", .{spring_damaged_usize});
+            var buffer: [64]u8 = [_]u8{0} ** 64;
+            for (0..try std.math.powi(u64, 2, springs_str.len)) |value| {
+                if (@popCount(value) != number_spring)
+                    continue;
+                if (value & ~spring_mask_usize != spring_damaged_usize)
+                    continue;
+                // really really ugly
+                var string_repr = try std.fmt.bufPrint(&buffer, "{b}", .{value});
+                // std.debug.print("match     = {b:0>10}\n", .{value});
+                // std.debug.print("match str = {s}\n", .{string_repr});
+                var group_it = std.mem.tokenizeScalar(u8, string_repr, '0');
+                for (check_sum.items) |check| {
+                    const group = group_it.next().?;
+                    if (check != group.len)
+                        break;
+                } else {
+                    acc_part1 += 1;
+                }
+            }
+            // std.debug.print("spring = {any}\n", .{spring_mask.items});
+            // std.debug.print("check = {d}\n", .{check_sum.items});
         }
         part1 = acc_part1;
         part2 = acc_part2;
     }
     var tac: i64 = std.time.microTimestamp() - tic;
-    std.log.info("Zig  day01 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
+    std.log.info("Zig  day12 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
 }
