@@ -12,6 +12,69 @@ fn sum(array: []u32) u64 {
     return acc;
 }
 
+fn arrangement_count(cache: []?u64, p: usize, g: usize, springs: []const u8, groups: []const u32) u64 {
+    // adapted solution from https://github.com/vanam/CodeUnveiled/blob/master/Advent%20Of%20Code%202023/12/main.py
+    // no more groups
+    if (g >= groups.len) {
+        if ((p < springs.len) and std.mem.containsAtLeast(u8, springs[p..], 1, "#")) {
+            // eg: .##?????#.. 4,1
+            return 0; // not a solution - there are still damaged springs in the record
+        }
+        return 1;
+    }
+
+    if (p >= springs.len) {
+        return 0; // we ran out of springs but there are still groups to arrange
+    }
+
+    // for above condition it's faster to recompute them than to access cache
+    const cache_idx = p * groups.len + g;
+    if (cache[cache_idx] != null) {
+        return cache[cache_idx].?;
+    }
+
+    // use a temp variable to be able to memoize the result
+    var res: u64 = 0;
+
+    // damaged group size
+    const gs = groups[g];
+    if (p + gs >= springs.len) {
+        // not enough spings to fill the group
+        res = 0;
+    } else {
+        switch (springs[p]) {
+            '?' => {
+                // if we can start group of damaged springs here
+                // eg: '??#...... 3' we can place 3 '#' and there is '?' or '.' after the group
+                // eg: '??##...... 3' we cannot place 3 '#' here
+                if (!std.mem.containsAtLeast(u8, springs[p .. p + gs], 1, ".") and springs[p + gs] != '#') {
+                    // start damaged group here + this spring is operational ('.')
+                    res = arrangement_count(cache, p + gs + 1, g + 1, springs, groups) + arrangement_count(cache, p + 1, g, springs, groups);
+                } else {
+                    // this spring is operational ('.')
+                    res = arrangement_count(cache, p + 1, g, springs, groups);
+                }
+            },
+            '#' => {
+                // if we can start damaged group here
+                if (!std.mem.containsAtLeast(u8, springs[p .. p + gs], 1, ".") and springs[p + gs] != '#') {
+                    res = arrangement_count(cache, p + gs + 1, g + 1, springs, groups);
+                } else {
+                    // not a solution - we must always start damaged group here
+                    res = 0;
+                }
+            },
+            '.' => {
+                // operational spring -> go to the next spring
+                res = arrangement_count(cache, p + 1, g, springs, groups);
+            },
+            else => unreachable,
+        }
+    }
+    cache[cache_idx] = res;
+    return res;
+}
+
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
@@ -32,7 +95,7 @@ pub fn main() !void {
     var tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
-    const nrun = 1;
+    const nrun = 1000;
     for (0..nrun) |_| {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
@@ -48,63 +111,41 @@ pub fn main() !void {
             if (line.len == 0)
                 continue;
 
-            var spring_damaged = std.ArrayList(bool).init(allocator);
-            var spring_mask = std.ArrayList(bool).init(allocator);
-            var spring_mask_usize: usize = 0;
-            var spring_damaged_usize: usize = 0;
-
-            var check_sum = std.ArrayList(u32).init(allocator);
-            defer check_sum.deinit();
+            var groups = std.ArrayList(u32).init(allocator);
 
             var line_it = std.mem.tokenizeAny(u8, line, " ,");
             var springs_str = line_it.next().?;
-            for (springs_str) |spring| {
-                spring_mask_usize <<= 1;
-                spring_damaged_usize <<= 1;
 
-                switch (spring) {
-                    '?' => {
-                        spring_mask_usize += 1;
-                        try spring_mask.append(false);
-                    },
-                    else => try spring_mask.append(true),
-                }
-                switch (spring) {
-                    '#' => {
-                        spring_damaged_usize += 1;
-                        try spring_damaged.append(true);
-                    },
-                    else => try spring_damaged.append(false),
-                }
-            }
             while (line_it.next()) |number| {
                 const value = try std.fmt.parseUnsigned(u32, number, 10);
-                try check_sum.append(value);
+                try groups.append(value);
             }
-            var number_spring = sum(check_sum.items);
-            // std.debug.print("unknown = {b:0>10}\n", .{spring_mask_usize});
-            // std.debug.print("damaged = {b:0>10}\n", .{spring_damaged_usize});
-            var buffer: [64]u8 = [_]u8{0} ** 64;
-            for (0..try std.math.powi(u64, 2, springs_str.len)) |value| {
-                if (@popCount(value) != number_spring)
-                    continue;
-                if (value & ~spring_mask_usize != spring_damaged_usize)
-                    continue;
-                // really really ugly
-                var string_repr = try std.fmt.bufPrint(&buffer, "{b}", .{value});
-                // std.debug.print("match     = {b:0>10}\n", .{value});
-                // std.debug.print("match str = {s}\n", .{string_repr});
-                var group_it = std.mem.tokenizeScalar(u8, string_repr, '0');
-                for (check_sum.items) |check| {
-                    const group = group_it.next().?;
-                    if (check != group.len)
-                        break;
-                } else {
-                    acc_part1 += 1;
+            // part 1
+            {
+                var spring_str_expanded = std.ArrayList(u8).init(allocator);
+                var group_expanded = std.ArrayList(u32).init(allocator);
+                for (0..1) |_| {
+                    try spring_str_expanded.appendSlice(springs_str);
+                    try spring_str_expanded.append('?');
+                    try group_expanded.appendSlice(groups.items);
                 }
+                var cache = std.ArrayList(?u64).init(allocator);
+                try cache.appendNTimes(null, group_expanded.items.len * spring_str_expanded.items.len);
+                acc_part1 += arrangement_count(cache.items, 0, 0, spring_str_expanded.items, group_expanded.items);
             }
-            // std.debug.print("spring = {any}\n", .{spring_mask.items});
-            // std.debug.print("check = {d}\n", .{check_sum.items});
+            // part 2
+            {
+                var spring_str_expanded = std.ArrayList(u8).init(allocator);
+                var group_expanded = std.ArrayList(u32).init(allocator);
+                for (0..5) |_| {
+                    try spring_str_expanded.appendSlice(springs_str);
+                    try spring_str_expanded.append('?');
+                    try group_expanded.appendSlice(groups.items);
+                }
+                var cache = std.ArrayList(?u64).init(allocator);
+                try cache.appendNTimes(null, group_expanded.items.len * spring_str_expanded.items.len);
+                acc_part2 += arrangement_count(cache.items, 0, 0, spring_str_expanded.items, group_expanded.items);
+            }
         }
         part1 = acc_part1;
         part2 = acc_part2;

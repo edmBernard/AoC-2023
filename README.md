@@ -34,7 +34,7 @@ cargo build --release
 | Day08 <sup>[puzzle](https://adventofcode.com/2023/day/8) | [Zig](src/day08.zig) | Graph | inputs are particular enough to use LCM |
 | Day09 <sup>[puzzle](https://adventofcode.com/2023/day/9) | [Zig](src/day09.zig) | time serie prediction |  |
 | Day11 <sup>[puzzle](https://adventofcode.com/2023/day/11) | [Zig](src/day11.zig) | Galaxy and universe expansion | work directly on galaxy coordinate |
-
+| Day12 <sup>[puzzle](https://adventofcode.com/2023/day/12) | [Zig](src/day12.zig) | Count pattern matching | recursive and memoization |
 
 ## Some Timing :
 
@@ -51,6 +51,7 @@ Zig  day08 in              3258.56 us : part1=22357      part2=10371555451871
 Zig  day09 in               106.85 us : part1=1731106378 part2=1087
 ...
 Zig  day11 in               148.00 us : part1=9599070    part2=842645913794
+Zig  day12 in              5256.85 us : part1=6949       part2=51456609952403
 
 In Rust
 Rust day01 in                66.89 us : part1=54304      part2=54418
