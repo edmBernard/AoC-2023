@@ -45,28 +45,15 @@ pub fn main() !void {
                 }
                 std.debug.print("\n", .{});
 
+                const width = board.items[0].len;
+                const height = board.items.len;
                 // horizontal
                 {
-                    var candidates = std.ArrayList(usize).init(allocator);
-                    var idx: usize = 1;
-                    var pair_it = std.mem.window([]const u8, board.items, 2, 1);
-                    while (pair_it.next()) |pair| {
-                        if (std.mem.eql(u8, pair[0], pair[1]))
-                            try candidates.append(idx);
-                        idx += 1;
-                    }
-                    // std.debug.print("candidates {d}\n", .{candidates.items});
-
-                    outer: for (candidates.items) |row| {
-                        const max_spacing = @min(row, board.items.len - row);
-                        // std.debug.print("row : {d}\n", .{row});
-                        // std.debug.print("max spacing : {d}\n", .{max_spacing});
+                    outer: for (1..height) |row| {
+                        const max_spacing = @min(row, height - row);
                         for (0..max_spacing) |spacing| {
-                            // std.debug.print("  {s}\n", .{board.items[row - spacing - 1]});
-                            // std.debug.print("  {s}\n", .{board.items[row + spacing]});
-                            if (!std.mem.eql(u8, board.items[row - spacing - 1], board.items[row + spacing])) {
+                            if (!std.mem.eql(u8, board.items[row - spacing - 1], board.items[row + spacing]))
                                 break;
-                            }
                         } else {
                             acc_part1 += 100 * row;
                             break :outer;
@@ -75,8 +62,6 @@ pub fn main() !void {
                 }
                 // vertical
                 {
-                    const width = board.items[0].len;
-                    const height = board.items.len;
                     var transposed = std.ArrayList(u8).init(allocator);
                     try transposed.ensureTotalCapacity(width * height);
                     for (0..width) |x| {
@@ -84,22 +69,9 @@ pub fn main() !void {
                             transposed.appendAssumeCapacity(board.items[y][x]);
                         }
                     }
-                    var candidates = std.ArrayList(usize).init(allocator);
-                    var idx: usize = 1;
                     // width of the orignal board is the height of the transposed board
-                    for (1..width) |row| {
-                        const offset_line1 = (row - 1) * height;
-                        const offset_line2 = row * height;
-                        if (std.mem.eql(u8, transposed.items[offset_line1 .. offset_line1 + height], transposed.items[offset_line2 .. offset_line2 + height]))
-                            try candidates.append(idx);
-                        idx += 1;
-                    }
-                    std.debug.print("candidates {d}\n", .{candidates.items});
-
-                    outer: for (candidates.items) |row| {
+                    outer: for (1..width) |row| {
                         const max_spacing = @min(row, width - row);
-                        std.debug.print("row : {d}\n", .{row});
-                        std.debug.print("max spacing : {d}\n", .{max_spacing});
                         for (0..max_spacing) |spacing| {
                             const offset_line1 = (row - spacing - 1) * height;
                             const offset_line2 = (row + spacing) * height;
