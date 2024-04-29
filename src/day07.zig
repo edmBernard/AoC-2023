@@ -1,8 +1,6 @@
 const std = @import("std");
 
-pub const std_options = struct {
-    pub const log_level = .info;
-};
+pub const std_options: std.Options = .{ .log_level = .info };
 
 const HandType = struct { cards: [5]u8, bid: u64 };
 
@@ -44,8 +42,8 @@ pub fn sortHandsPart2(_: void, a: HandType, b: HandType) bool {
     for (b.cards) |card| {
         cards_hash_b[card] += 1;
     }
-    var number_of_joker_a = cards_hash_a[0];
-    var number_of_joker_b = cards_hash_b[0];
+    const number_of_joker_a = cards_hash_a[0];
+    const number_of_joker_b = cards_hash_b[0];
     // reset joker to not count them
     cards_hash_a[0] = 0;
     cards_hash_b[0] = 0;
@@ -83,13 +81,13 @@ pub fn main() !void {
     // skip exectutable name
     _ = args.skip();
 
-    var filename = args.next();
+    const filename = args.next();
     if (filename == null) {
         std.log.err("Missing filename", .{});
         return;
     }
 
-    var tic = std.time.microTimestamp();
+    const tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
     const nrun = 10000;
@@ -97,7 +95,7 @@ pub fn main() !void {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
 
-        var read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
+        const read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
         defer allocator.free(read_buf);
         var it = std.mem.splitAny(u8, read_buf, "\n");
 
@@ -116,8 +114,8 @@ pub fn main() !void {
 
             // parse
             var line_it = std.mem.tokenizeScalar(u8, line, ' ');
-            var cards = line_it.next().?;
-            var bid = try std.fmt.parseUnsigned(u32, line_it.next().?, 10);
+            const cards = line_it.next().?;
+            const bid = try std.fmt.parseUnsigned(u32, line_it.next().?, 10);
             var cards_int = [_]u8{0} ** 5;
             // part1
             var card_value_part1 = [_]u8{ '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A' };
@@ -146,6 +144,6 @@ pub fn main() !void {
         part1 = acc_part1;
         part2 = acc_part2;
     }
-    var tac: i64 = std.time.microTimestamp() - tic;
+    const tac: i64 = std.time.microTimestamp() - tic;
     std.log.info("Zig  day07 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
 }

@@ -1,8 +1,6 @@
 const std = @import("std");
 
-pub const std_options = struct {
-    pub const log_level = .info;
-};
+pub const std_options: std.Options = .{ .log_level = .info };
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -15,13 +13,13 @@ pub fn main() !void {
     // skip exectutable name
     _ = args.skip();
 
-    var filename = args.next();
+    const filename = args.next();
     if (filename == null) {
         std.log.err("Missing filename", .{});
         return;
     }
 
-    var tic = std.time.microTimestamp();
+    const tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
     const nrun = 10000;
@@ -29,7 +27,7 @@ pub fn main() !void {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
 
-        var read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
+        const read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
         defer allocator.free(read_buf);
         var it = std.mem.splitAny(u8, read_buf, "\n");
 
@@ -54,6 +52,7 @@ pub fn main() !void {
             if (is_first_line) {
                 line_size = line.len;
                 try expanded_column.appendNTimes(true, line_size);
+                is_first_line = false;
             }
             var has_galaxy = false;
             for (line, 0..) |c, col| {
@@ -106,7 +105,7 @@ pub fn main() !void {
         }
         for (galaxy_position_part1.items, 0..) |galaxy1, idx| {
             for (galaxy_position_part1.items[idx + 1 ..]) |galaxy2| {
-                acc_part1 += std.math.absCast(galaxy1.x - galaxy2.x) + std.math.absCast(galaxy1.y - galaxy2.y);
+                acc_part1 += @abs(galaxy1.x - galaxy2.x) + @abs(galaxy1.y - galaxy2.y);
             }
         }
         // part2
@@ -116,7 +115,7 @@ pub fn main() !void {
         }
         for (galaxy_position_part2.items, 0..) |galaxy1, idx| {
             for (galaxy_position_part2.items[idx + 1 ..]) |galaxy2| {
-                acc_part2 += std.math.absCast(galaxy1.x - galaxy2.x) + std.math.absCast(galaxy1.y - galaxy2.y);
+                acc_part2 += @abs(galaxy1.x - galaxy2.x) + @abs(galaxy1.y - galaxy2.y);
             }
         }
 
@@ -124,6 +123,6 @@ pub fn main() !void {
         part2 = acc_part2;
     }
 
-    var tac = std.time.microTimestamp() - tic;
+    const tac = std.time.microTimestamp() - tic;
     std.log.info("Zig  day11 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
 }

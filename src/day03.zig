@@ -1,8 +1,6 @@
 const std = @import("std");
 
-pub const std_options = struct {
-    pub const log_level = .info;
-};
+pub const std_options: std.Options = .{ .log_level = .info };
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -15,13 +13,13 @@ pub fn main() !void {
     // skip exectutable name
     _ = args.skip();
 
-    var filename = args.next();
+    const filename = args.next();
     if (filename == null) {
         std.log.err("Missing filename", .{});
         return;
     }
 
-    var tic = std.time.microTimestamp();
+    const tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
     const nrun = 10000;
@@ -29,7 +27,7 @@ pub fn main() !void {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
 
-        var read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
+        const read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
         defer allocator.free(read_buf);
         var it = std.mem.splitScalar(u8, read_buf, '\n');
 
@@ -104,8 +102,8 @@ pub fn main() !void {
             for (number_list.items) |n| {
                 acc_part1 += n.number;
                 outer: for (0..std.math.log10_int(n.number) + 1) |offset| {
-                    var x: i32 = @intCast(@mod(n.pos + offset, width));
-                    var y: i32 = @intCast(@divFloor(n.pos, width));
+                    const x: i32 = @intCast(@mod(n.pos + offset, width));
+                    const y: i32 = @intCast(@divFloor(n.pos, width));
 
                     for (dirx, diry) |dx, dy| {
                         const new_x: usize = @intCast(std.math.clamp(x + dx, 0, @as(i32, @intCast(width - 1))));
@@ -129,8 +127,8 @@ pub fn main() !void {
                 var nums = std.ArrayList(u32).init(allocator);
                 defer nums.deinit();
 
-                var x: i32 = @intCast(@mod(gear_idx, width));
-                var y: i32 = @intCast(@divFloor(gear_idx, width));
+                const x: i32 = @intCast(@mod(gear_idx, width));
+                const y: i32 = @intCast(@divFloor(gear_idx, width));
 
                 dir: for (dirx, diry) |dx, dy| {
                     const new_x: usize = @intCast(std.math.clamp(x + dx, 0, @as(i32, @intCast(width - 1))));
@@ -155,6 +153,6 @@ pub fn main() !void {
         part1 = acc_part1;
         part2 = acc_part2;
     }
-    var tac: i64 = std.time.microTimestamp() - tic;
+    const tac: i64 = std.time.microTimestamp() - tic;
     std.log.info("Zig  day03 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
 }

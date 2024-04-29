@@ -1,8 +1,6 @@
 const std = @import("std");
 
-pub const std_options = struct {
-    pub const log_level = .info;
-};
+pub const std_options: std.Options = .{ .log_level = .info };
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -15,13 +13,13 @@ pub fn main() !void {
     // skip exectutable name
     _ = args.skip();
 
-    var filename = args.next();
+    const filename = args.next();
     if (filename == null) {
         std.log.err("Missing filename", .{});
         return;
     }
 
-    var tic = std.time.microTimestamp();
+    const tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
     const nrun = 1;
@@ -29,7 +27,7 @@ pub fn main() !void {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
 
-        var read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
+        const read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
         defer allocator.free(read_buf);
         var it = std.mem.splitAny(u8, read_buf, "\n");
 
@@ -49,14 +47,38 @@ pub fn main() !void {
                 const height = board.items.len;
                 // horizontal
                 {
-                    outer: for (1..height) |row| {
+                    for (1..height) |row| {
                         const max_spacing = @min(row, height - row);
+                        var n_reflection: u64 = 0;
+                        var has_jocker = true;
                         for (0..max_spacing) |spacing| {
-                            if (!std.mem.eql(u8, board.items[row - spacing - 1], board.items[row + spacing]))
-                                break;
-                        } else {
+                            const line1 = board.items[row - spacing - 1];
+                            const line2 = board.items[row + spacing];
+
+                            const index_first_diff = std.mem.indexOfDiff(u8, line1, line2);
+                            if (index_first_diff == null) {
+                                n_reflection += 1;
+                            } else if (has_jocker) {
+                                std.debug.print("row {d} index first diff : {d}\n", .{ row, index_first_diff.? });
+                                const index_second_diff = std.mem.indexOfDiff(u8, line1[index_first_diff.? + 1 ..], line2[index_first_diff.? + 1 ..]);
+
+                                std.debug.print("  line1 sliced {s}\n", .{line1[index_first_diff.? + 1 ..]});
+                                std.debug.print("  line2 sliced {s}\n", .{line2[index_first_diff.? + 1 ..]});
+                                std.debug.print("row {d} index second diff : {?}\n", .{ row, index_second_diff });
+                                if (index_second_diff == null) {
+                                    n_reflection += 1;
+                                    has_jocker = false;
+                                    // TODO: This solution allow a different smudge each time so it doesn't work
+                                }
+                            }
+                        }
+                        if (n_reflection == max_spacing) {
                             acc_part1 += 100 * row;
-                            break :outer;
+                        }
+                        if (n_reflection > 0 and n_reflection == max_spacing) {
+                            std.debug.print("n {} max {}\n", .{ n_reflection, max_spacing });
+                            std.debug.print("part2 reflection line {}\n", .{row});
+                            acc_part2 += 100 * row;
                         }
                     }
                 }
@@ -93,6 +115,6 @@ pub fn main() !void {
         part1 = acc_part1;
         part2 = acc_part2;
     }
-    var tac: i64 = std.time.microTimestamp() - tic;
+    const tac: i64 = std.time.microTimestamp() - tic;
     std.log.info("Zig  day13 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
 }

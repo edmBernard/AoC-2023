@@ -1,8 +1,6 @@
 const std = @import("std");
 
-pub const std_options = struct {
-    pub const log_level = .info;
-};
+pub const std_options: std.Options = .{ .log_level = .info };
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -15,13 +13,13 @@ pub fn main() !void {
     // skip exectutable name
     _ = args.skip();
 
-    var filename = args.next();
+    const filename = args.next();
     if (filename == null) {
         std.log.err("Missing filename", .{});
         return;
     }
 
-    var tic = std.time.microTimestamp();
+    const tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
     const nrun = 10000;
@@ -29,7 +27,7 @@ pub fn main() !void {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
 
-        var read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
+        const read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
         defer allocator.free(read_buf);
         var line_it = std.mem.splitAny(u8, read_buf, "\n");
 
@@ -46,7 +44,7 @@ pub fn main() !void {
 
             var it = std.mem.tokenizeScalar(u8, line, ' ');
             while (it.next()) |number_str| {
-                var number = try std.fmt.parseInt(i32, number_str, 10);
+                const number = try std.fmt.parseInt(i32, number_str, 10);
                 try serie_part1.append(number);
                 try serie_part2.append(number);
             }
@@ -93,6 +91,6 @@ pub fn main() !void {
         part1 = @intCast(acc_part1);
         part2 = @intCast(acc_part2);
     }
-    var tac: i64 = std.time.microTimestamp() - tic;
+    const tac: i64 = std.time.microTimestamp() - tic;
     std.log.info("Zig  day09 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
 }

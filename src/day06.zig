@@ -1,8 +1,6 @@
 const std = @import("std");
 
-pub const std_options = struct {
-    pub const log_level = .info;
-};
+pub const std_options: std.Options = .{ .log_level = .info };
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -15,13 +13,13 @@ pub fn main() !void {
     // skip exectutable name
     _ = args.skip();
 
-    var filename = args.next();
+    const filename = args.next();
     if (filename == null) {
         std.log.err("Missing filename", .{});
         return;
     }
 
-    var tic = std.time.microTimestamp();
+    const tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
     const nrun = 10000;
@@ -29,7 +27,7 @@ pub fn main() !void {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
 
-        var read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
+        const read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
         defer allocator.free(read_buf);
         var it = std.mem.splitAny(u8, read_buf, "\n");
 
@@ -71,7 +69,7 @@ pub fn main() !void {
         for (distances.items, times.items) |record_distance, total_time| {
             var number_of_way: u64 = 0;
             for (0..total_time) |t| {
-                var distance = (total_time - t) * t;
+                const distance = (total_time - t) * t;
                 if (distance > record_distance)
                     number_of_way += 1;
             }
@@ -80,14 +78,14 @@ pub fn main() !void {
         // part2
         {
             // Solve the quadratic equation
-            var delta: f64 = @floatFromInt(total_time_part2 * total_time_part2 - 4 * total_distance_part2);
-            var x1: u64 = @intFromFloat(@floor((@as(f64, @floatFromInt(total_distance_part2)) - std.math.sqrt(delta)) / 2));
-            var x2: u64 = @intFromFloat(@floor((@as(f64, @floatFromInt(total_distance_part2)) + std.math.sqrt(delta)) / 2));
+            const delta: f64 = @floatFromInt(total_time_part2 * total_time_part2 - 4 * total_distance_part2);
+            const x1: u64 = @intFromFloat(@floor((@as(f64, @floatFromInt(total_distance_part2)) - std.math.sqrt(delta)) / 2));
+            const x2: u64 = @intFromFloat(@floor((@as(f64, @floatFromInt(total_distance_part2)) + std.math.sqrt(delta)) / 2));
             acc_part2 = x2 - x1;
         }
         part1 = acc_part1;
         part2 = acc_part2;
     }
-    var tac: i64 = std.time.microTimestamp() - tic;
+    const tac: i64 = std.time.microTimestamp() - tic;
     std.log.info("Zig  day06 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
 }

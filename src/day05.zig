@@ -1,8 +1,6 @@
 const std = @import("std");
 
-pub const std_options = struct {
-    pub const log_level = .info;
-};
+pub const std_options: std.Options = .{ .log_level = .info };
 
 pub fn sortPair(_: void, a: [2]u64, b: [2]u64) bool {
     return a[0] < b[0];
@@ -19,13 +17,13 @@ pub fn main() !void {
     // skip exectutable name
     _ = args.skip();
 
-    var filename = args.next();
+    const filename = args.next();
     if (filename == null) {
         std.log.err("Missing filename", .{});
         return;
     }
 
-    var tic = std.time.microTimestamp();
+    const tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
     const nrun = 10000;
@@ -33,7 +31,7 @@ pub fn main() !void {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
 
-        var read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
+        const read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
         defer allocator.free(read_buf);
         var it = std.mem.splitAny(u8, read_buf, "\n");
 
@@ -110,8 +108,8 @@ pub fn main() !void {
                 if (mask.*) {
                     continue;
                 }
-                var s_min = &seed_range[0];
-                var s_max = &seed_range[1];
+                const s_min = &seed_range[0];
+                const s_max = &seed_range[1];
 
                 // seed-range completly outside of mapping-range
                 if (s_max.* < rsource_min or s_min.* > rsource_max) {
@@ -130,15 +128,15 @@ pub fn main() !void {
                 if (s_min.* <= rsource_min and s_max.* >= rsource_max) {
                     // low part
                     if (s_min.* != rsource_min) {
-                        var low_min = s_min.*;
-                        var low_max = rsource_min - 1;
+                        const low_min = s_min.*;
+                        const low_max = rsource_min - 1;
                         seeds_p2.appendAssumeCapacity([_]u64{ low_min, low_max });
                         seeds_mask_p2.appendAssumeCapacity(false);
                     }
                     // high part
                     if (s_max.* != rsource_max) {
-                        var high_min = rsource_max + 1;
-                        var high_max = s_max.*;
+                        const high_min = rsource_max + 1;
+                        const high_max = s_max.*;
                         seeds_p2.appendAssumeCapacity([_]u64{ high_min, high_max });
                         seeds_mask_p2.appendAssumeCapacity(false);
                     }
@@ -152,8 +150,8 @@ pub fn main() !void {
                 // mapping-range half high of seed-range
                 if (s_min.* < rsource_min and s_max.* <= rsource_max) {
                     // low part
-                    var low_min = s_min.*;
-                    var low_max = rsource_min - 1;
+                    const low_min = s_min.*;
+                    const low_max = rsource_min - 1;
                     seeds_p2.appendAssumeCapacity([_]u64{ low_min, low_max });
                     seeds_mask_p2.appendAssumeCapacity(false);
                     // middle part
@@ -166,8 +164,8 @@ pub fn main() !void {
                 // mapping-range half low of seed-range
                 if (s_min.* >= rsource_min and s_max.* > rsource_max) {
                     // high part
-                    var high_min = rsource_max + 1;
-                    var high_max = s_max.*;
+                    const high_min = rsource_max + 1;
+                    const high_max = s_max.*;
                     seeds_p2.appendAssumeCapacity([_]u64{ high_min, high_max });
                     seeds_mask_p2.appendAssumeCapacity(false);
                     // middle part
@@ -185,6 +183,6 @@ pub fn main() !void {
         part1 = seeds_p1.items[0];
         part2 = seeds_p2.items[0][0];
     }
-    var tac: i64 = std.time.microTimestamp() - tic;
+    const tac: i64 = std.time.microTimestamp() - tic;
     std.log.info("Zig  day05 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
 }

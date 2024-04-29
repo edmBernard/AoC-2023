@@ -1,8 +1,6 @@
 const std = @import("std");
 
-pub const std_options = struct {
-    pub const log_level = .info;
-};
+pub const std_options: std.Options = .{ .log_level = .info };
 
 fn sum(array: []u64) u64 {
     var acc: u64 = 0;
@@ -23,13 +21,13 @@ pub fn main() !void {
     // skip exectutable name
     _ = args.skip();
 
-    var filename = args.next();
+    const filename = args.next();
     if (filename == null) {
         std.log.err("Missing filename", .{});
         return;
     }
 
-    var tic = std.time.microTimestamp();
+    const tic = std.time.microTimestamp();
     var part1: u64 = 0;
     var part2: u64 = 0;
     const nrun = 10000;
@@ -37,7 +35,7 @@ pub fn main() !void {
         var file = try std.fs.cwd().openFile(filename.?, .{ .mode = .read_only });
         defer file.close();
 
-        var read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
+        const read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
         defer allocator.free(read_buf);
         var it = std.mem.splitAny(u8, read_buf, "\n");
 
@@ -58,8 +56,8 @@ pub fn main() !void {
             const column_idx = std.mem.indexOf(u8, line, ":");
 
             var number_series = std.mem.splitScalar(u8, line[column_idx.? + 1 ..], '|');
-            var winning_string = number_series.next().?;
-            var yours_string = number_series.next().?;
+            const winning_string = number_series.next().?;
+            const yours_string = number_series.next().?;
 
             var winning_numbers = std.ArrayList(u64).init(allocator);
             defer winning_numbers.deinit();
@@ -105,6 +103,6 @@ pub fn main() !void {
         part1 = acc_part1;
         part2 = acc_part2;
     }
-    var tac: i64 = std.time.microTimestamp() - tic;
+    const tac: i64 = std.time.microTimestamp() - tic;
     std.log.info("Zig  day04 in {d:>20.2} us : part1={:<10} part2={:<10}", .{ @as(f32, @floatFromInt(tac)) / @as(f32, nrun), part1, part2 });
 }
