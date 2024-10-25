@@ -9,16 +9,30 @@ pub fn build(b: *std.Build) void {
 
     // Standard release options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-    // b.setPreferredOptimizeMode(.ReleaseFast);
+    // const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseFast });
     const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseFast });
 
     var buffer_filename = [_]u8{0} ** 20;
-    const days = [_][]const u8{ "day01", "day02", "day03", "day04", "day05", "day06", "day07", "day08", "day09", "day11", "day12", "day13" };
+    const days = [_][]const u8{
+        "day01",
+        "day02",
+        "day03",
+        "day04",
+        "day05",
+        "day06",
+        "day07",
+        "day08",
+        "day09",
+        // "day10",
+        "day11",
+        "day12",
+        "day13",
+    };
     for (days) |day| {
         const filename = std.fmt.bufPrint(&buffer_filename, "src/{s}.zig", .{day}) catch continue;
         const exe = b.addExecutable(.{
             .name = day,
-            .root_source_file = .{ .path = filename },
+            .root_source_file = b.path(filename),
             .target = target,
             .optimize = optimize,
         });

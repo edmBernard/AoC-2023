@@ -1,3 +1,7 @@
+//  https://github.com/edmBernard/AoC-2023
+//  Copyright 2024 Erwan BERNARD
+//  Distributed under the Apache License, Version 2.0.
+
 const std = @import("std");
 
 pub const std_options: std.Options = .{ .log_level = .info };

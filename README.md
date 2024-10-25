@@ -64,6 +64,6 @@ C++  day01 in               49.191 us : part1=54304     part2=54418
 
 ## Versions
 
-- Zig  : 0.12.0
+- Zig  : 0.13.0
 - Rust : rustc 1.76.0
 - C++  : clang 15.0.0
